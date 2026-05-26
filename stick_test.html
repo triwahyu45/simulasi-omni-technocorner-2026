@@ -6,81 +6,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Xbox Gamepad Diagnostic</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700;800&display=swap');
 
-        *,
-        *::before,
-        *::after {
+        * {
             box-sizing: border-box;
             margin: 0;
             padding: 0
         }
 
         :root {
-            --bg: #0e1117;
-            --surface: #161b24;
-            --surface2: #111820;
-            --border: #252d3a;
-            --accent: #00e5a0;
-            --accent2: #00b3ff;
-            --dim: #2a3344;
-            --text: #c8d8e8;
-            --muted: #657386;
-            --danger: #ff4444;
-            --warning: #ffaa00;
-            --green: #44ee88;
-            --red: #ff4466;
-            --blue: #4a9eff;
-            --yellow: #ffd84a
+            --bg: #080d14;
+            --panel: #111923cc;
+            --panel2: #0d141dcc;
+            --line: #273345;
+            --line2: #334259;
+            --text: #d7e6f7;
+            --muted: #84a0bd;
+            --dim: #1f2b3b;
+            --green: #00f0a8;
+            --blue: #19bfff;
+            --red: #ff4268;
+            --yellow: #ffe35a;
+            --orange: #ffac32
+        }
+
+        html,
+        body {
+            min-height: 100%
         }
 
         body {
-            background: radial-gradient(circle at top, #141b27 0, #0e1117 45%, #090c11 100%);
+            background: radial-gradient(circle at 50% 0, #172232 0, #0b1018 45%, #060a10 100%);
             color: var(--text);
             font-family: Rajdhani, sans-serif;
-            min-height: 100vh;
-            padding: 20px 16px 38px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden
+            overflow: hidden;
+            padding: 8px 14px 10px
         }
 
         h1 {
             font-family: 'Share Tech Mono', monospace;
-            font-size: 13px;
-            letter-spacing: .25em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 8px
+            font-size: 18px;
+            letter-spacing: .42em;
+            text-align: center;
+            color: #9fb7d2;
+            margin: 0 0 8px;
+            text-transform: uppercase
         }
 
         #status-bar {
+            height: 44px;
+            max-width: 1520px;
+            margin: 0 auto 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(22, 27, 36, .92);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 14px;
+            gap: 12px;
+            padding: 0 18px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: linear-gradient(180deg, #121a25cc, #0b111acc);
+            box-shadow: 0 0 30px #0008;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 14px;
-            width: 100%;
-            max-width: 1040px
+            font-size: 15px;
+            color: #b3c9e3
         }
 
         #status-dot {
-            width: 8px;
-            height: 8px;
+            width: 13px;
+            height: 13px;
             border-radius: 50%;
-            background: var(--muted)
+            background: #405066;
+            flex: 0 0 auto
         }
 
         #status-dot.on {
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent)
+            background: var(--green);
+            box-shadow: 0 0 16px var(--green)
         }
 
         #status-text {
@@ -92,31 +92,38 @@
         }
 
         #input-count {
-            color: var(--accent)
+            color: var(--green);
+            font-weight: 800;
+            white-space: nowrap
         }
 
-        .main {
+        .dashboard {
+            max-width: 1520px;
+            height: calc(100vh - 82px);
+            margin: auto;
             display: grid;
-            grid-template-columns: minmax(720px, 780px) 260px;
-            gap: 16px;
-            align-items: start;
-            width: 100%;
-            max-width: 1060px
+            grid-template-columns: minmax(820px, 1fr) 410px;
+            grid-template-rows: minmax(410px, 1fr) 210px;
+            gap: 12px;
+            grid-template-areas: 'pad side' 'tools side'
+        }
+
+        .pad-area {
+            grid-area: pad;
+            position: relative;
+            min-height: 410px;
+            border-radius: 18px;
+            background: radial-gradient(circle at center, #121b27a0, #080d1400 64%)
         }
 
         .controller-wrap {
-            position: relative;
-            width: 760px;
-            height: 470px;
-            margin: 0 auto 12px
-        }
-
-        .side-panel {
-            background: rgba(22, 27, 36, .82);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 12px;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, .18)
+            position: absolute;
+            inset: 0;
+            max-width: 970px;
+            max-height: 520px;
+            margin: auto;
+            width: 100%;
+            height: 100%
         }
 
         #controller-svg {
@@ -126,82 +133,332 @@
             height: 100%
         }
 
-        .trigger-zone {
-            position: absolute;
-            top: 24px;
-            display: flex;
-            align-items: center;
-            gap: 6px
+        .side-panel,
+        .tool-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: linear-gradient(180deg, var(--panel), var(--panel2));
+            box-shadow: 0 16px 42px #0004
         }
 
-        .trigger-zone.left {
-            left: 42px
-        }
-
-        .trigger-zone.right {
-            right: 42px
-        }
-
-        .trigger-label {
-            font: 10px 'Share Tech Mono', monospace;
-            color: var(--muted)
-        }
-
-        .trigger-track {
-            width: 76px;
-            height: 12px;
-            background: var(--dim);
-            border-radius: 999px;
-            border: 1px solid var(--border);
+        .side-panel {
+            grid-area: side;
+            padding: 16px;
             overflow: hidden
         }
 
+        .section-label,
+        .tool-title {
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: .28em;
+            color: #9eb7d3;
+            text-transform: uppercase;
+            font-size: 14px;
+            margin-bottom: 12px
+        }
+
+        .btn-track {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px
+        }
+
+        .btn-chip {
+            height: 38px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #0b141dcc;
+            color: #9cb4ce;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: .02em
+        }
+
+        .btn-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #26354a
+        }
+
+        .btn-chip.on {
+            color: var(--green);
+            border-color: #168c70;
+            background: #0a221a
+        }
+
+        .btn-chip.on .dot {
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green)
+        }
+
+        .btn-chip.a.on {
+            color: var(--green)
+        }
+
+        .btn-chip.b.on {
+            color: var(--red);
+            border-color: var(--red);
+            background: #25101a
+        }
+
+        .btn-chip.b.on .dot {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red)
+        }
+
+        .btn-chip.x.on {
+            color: var(--blue);
+            border-color: var(--blue);
+            background: #0a1b2a
+        }
+
+        .btn-chip.x.on .dot {
+            background: var(--blue);
+            box-shadow: 0 0 10px var(--blue)
+        }
+
+        .btn-chip.y.on {
+            color: var(--yellow);
+            border-color: var(--yellow);
+            background: #231f0b
+        }
+
+        .btn-chip.y.on .dot {
+            background: var(--yellow);
+            box-shadow: 0 0 10px var(--yellow)
+        }
+
+        .btn-chip.tested {
+            border-color: #38506b;
+            color: #7890aa
+        }
+
+        .side-tools {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px
+        }
+
+        .side-tools .tool-card {
+            padding: 13px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .ui-btn {
+            border: 1px solid var(--line2);
+            border-radius: 10px;
+            background: #0b121bcc;
+            color: var(--text);
+            min-height: 38px;
+            padding: 8px 14px;
+            font: 800 17px Rajdhani, sans-serif;
+            cursor: pointer
+        }
+
+        .ui-btn:hover,
+        .ui-btn.active {
+            border-color: var(--green);
+            color: var(--green);
+            box-shadow: inset 0 0 0 1px #00f0a822
+        }
+
+        .ui-btn.blue.active,
+        .ui-btn.blue:hover {
+            border-color: var(--blue);
+            color: var(--blue)
+        }
+
+        .metric {
+            margin-top: 8px;
+            font: 14px 'Share Tech Mono', monospace;
+            color: #91a9c4;
+            line-height: 1.65
+        }
+
+        .metric b {
+            color: var(--green)
+        }
+
+        .tools-grid {
+            grid-area: tools;
+            display: grid;
+            grid-template-columns: 250px 380px 310px 1fr;
+            gap: 12px
+        }
+
+        .tool-card {
+            padding: 15px;
+            overflow: hidden
+        }
+
+        .legend {
+            font: 16px 'Share Tech Mono', monospace;
+            color: #bfd3e9;
+            line-height: 2.25
+        }
+
+        .legend i {
+            display: inline-block;
+            width: 24px;
+            height: 3px;
+            margin-right: 12px;
+            vertical-align: middle
+        }
+
+        .l-green {
+            background: var(--green)
+        }
+
+        .l-blue {
+            background: var(--blue)
+        }
+
+        .mini-circ-wrap {
+            display: flex;
+            gap: 18px
+        }
+
+        .mini-circ {
+            width: 160px;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            color: #b9cde4
+        }
+
+        .mini-circ canvas {
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            display: block;
+            margin: 0 auto 4px
+        }
+
+        .mini-circ b {
+            font-size: 22px;
+            color: var(--green)
+        }
+
+        .mini-circ.right b {
+            color: var(--blue)
+        }
+
+        .axis-list {
+            font: 15px 'Share Tech Mono', monospace;
+            color: #c7d9ee;
+            line-height: 1.72
+        }
+
+        .axis-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px
+        }
+
+        .axis-row span:first-child {
+            color: #9cb4ce
+        }
+
+        .axis-row span:last-child {
+            color: var(--green)
+        }
+
+        .axis-row.r span:last-child {
+            color: var(--blue)
+        }
+
+        .trigger-zone {
+            position: absolute;
+            top: 105px;
+            height: 190px;
+            width: 44px;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            color: #a8c2de;
+            font-size: 16px;
+            font-weight: 800;
+            z-index: 5
+        }
+
+        .trigger-zone.left {
+            left: 34px
+        }
+
+        .trigger-zone.right {
+            right: 34px
+        }
+
+        .trigger-track {
+            height: 150px;
+            width: 22px;
+            margin: 8px auto 5px;
+            border: 1px solid var(--line2);
+            border-radius: 999px;
+            background: #091018;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            padding: 2px
+        }
+
         .trigger-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent);
-            transition: width .03s
+            width: 100%;
+            height: 0%;
+            border-radius: 999px;
+            background: var(--green);
+            box-shadow: 0 0 12px var(--green);
+            transition: height .03s
         }
 
         .trigger-fill.r {
-            background: var(--accent2);
-            box-shadow: 0 0 8px var(--accent2)
+            background: var(--blue);
+            box-shadow: 0 0 12px var(--blue)
         }
 
         .trigger-val {
-            font: 10px 'Share Tech Mono', monospace;
-            color: var(--accent);
-            width: 30px
+            font-size: 15px;
+            color: var(--green)
         }
 
         .trigger-val.r {
-            color: var(--accent2)
+            color: var(--blue)
         }
 
         .stick-overlay {
             position: absolute;
-            width: 84px
+            width: 86px;
+            z-index: 8
         }
 
         .stick-overlay.left {
-            left: 177px;
-            top: 158px
+            left: 235px;
+            top: 178px
         }
 
         .stick-overlay.right {
-            left: 464px;
-            top: 286px
+            left: 565px;
+            top: 260px
         }
 
         .stick-ring {
-            width: 84px;
-            height: 84px;
+            width: 86px;
+            height: 86px;
             border-radius: 50%;
-            border: 1.5px solid var(--border);
-            background: #0a0f16;
+            border: 2px solid #26364a;
+            background: #071018;
             position: relative;
-            overflow: hidden
+            overflow: hidden;
+            box-shadow: inset 0 0 18px #000, 0 0 0 6px #111b26aa
         }
 
         .stick-crosshair {
@@ -209,17 +466,18 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%;
+            width: 82%;
             height: 1px;
-            background: var(--dim)
+            background: #223348
         }
 
         .stick-crosshair.v {
             width: 1px;
-            height: 90%
+            height: 82%
         }
 
-        canvas.trail {
+        canvas.trail,
+        canvas.circ-canvas {
             position: absolute;
             inset: 0;
             width: 100%;
@@ -227,297 +485,180 @@
             border-radius: 50%
         }
 
-        .stick-dot {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
-            top: calc(50% - 6px);
-            left: calc(50% - 6px);
-            transition: transform .02s;
+        canvas.circ-canvas {
+            z-index: 1;
+            display: none
+        }
+
+        canvas.trail {
             z-index: 2
         }
 
+        .stick-dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            left: calc(50% - 7px);
+            top: calc(50% - 7px);
+            background: var(--green);
+            box-shadow: 0 0 15px var(--green);
+            z-index: 4;
+            transition: transform .02s
+        }
+
         .stick-dot.r {
-            background: var(--accent2);
-            box-shadow: 0 0 10px var(--accent2)
+            background: var(--blue);
+            box-shadow: 0 0 15px var(--blue)
         }
 
-        .stick-active .stick-ring {
-            border-color: var(--accent)
+        .avg-error {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            pointer-events: none;
+            font: 800 16px Rajdhani, sans-serif;
+            line-height: .95;
+            color: #fff;
+            text-shadow: 0 2px 8px #000
         }
 
-        .stick-active.r .stick-ring {
-            border-color: var(--accent2)
+        .avg-error small {
+            display: block;
+            font: 800 8px 'Share Tech Mono', monospace;
+            color: #fff
+        }
+
+        .avg-error.on {
+            display: flex
         }
 
         .stick-info {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 4px;
-            font: 9px 'Share Tech Mono', monospace;
-            color: var(--muted);
-            width: 84px
+            margin-top: 8px;
+            width: 130px;
+            transform: translateX(-22px);
+            font: 15px 'Share Tech Mono', monospace;
+            color: #d5e6fb;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3px
+        }
+
+        .stick-info .lab {
+            color: var(--green);
+            font-weight: 800
+        }
+
+        .stick-overlay.right .stick-info .lab {
+            color: var(--blue)
         }
 
         .drift-badge {
-            margin-top: 3px;
-            font: 9px 'Share Tech Mono', monospace;
-            text-align: center;
-            width: 84px
+            display: none
         }
 
-        .drift-none {
-            color: var(--accent)
+        .stick-active .stick-ring {
+            border-color: var(--green)
         }
 
-        .drift-low,
-        .drift-moderate {
-            color: var(--warning)
+        .stick-active.r .stick-ring {
+            border-color: var(--blue)
         }
 
-        .drift-severe {
-            color: var(--danger)
-        }
+        @media(max-height:820px) {
+            body {
+                padding-top: 5px
+            }
 
-        .section-label {
-            font: 10px 'Share Tech Mono', monospace;
-            letter-spacing: .2em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin: 2px 0 8px
-        }
+            h1 {
+                font-size: 16px;
+                margin-bottom: 6px
+            }
 
-        .btn-track {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 7px
-        }
+            #status-bar {
+                height: 40px;
+                margin-bottom: 8px
+            }
 
-        .btn-chip {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 6px 8px;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            background: var(--surface2);
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--muted);
-            letter-spacing: .04em;
-            transition: .07s
-        }
+            .dashboard {
+                height: calc(100vh - 68px);
+                grid-template-rows: minmax(365px, 1fr) 190px
+            }
 
-        .btn-chip .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--border)
-        }
+            .btn-chip {
+                height: 34px;
+                font-size: 17px
+            }
 
-        .btn-chip.on {
-            border-color: var(--accent2);
-            color: var(--accent2);
-            background: #101820
-        }
+            .side-tools .tool-card {
+                padding: 10px
+            }
 
-        .btn-chip.on .dot {
-            background: var(--accent2);
-            box-shadow: 0 0 7px var(--accent2)
-        }
+            .tool-card {
+                padding: 12px
+            }
 
-        .btn-chip.a.on {
-            border-color: var(--green);
-            color: var(--green);
-            background: #0a2015
-        }
+            .section-label,
+            .tool-title {
+                font-size: 13px;
+                margin-bottom: 8px
+            }
 
-        .btn-chip.a.on .dot {
-            background: var(--green);
-            box-shadow: 0 0 7px var(--green)
-        }
+            .ui-btn {
+                min-height: 34px;
+                font-size: 16px
+            }
 
-        .btn-chip.b.on {
-            border-color: var(--red);
-            color: var(--red);
-            background: #2a0515
-        }
+            .trigger-zone {
+                top: 90px
+            }
 
-        .btn-chip.b.on .dot {
-            background: var(--red);
-            box-shadow: 0 0 7px var(--red)
-        }
+            .tools-grid {
+                grid-template-columns: 250px 360px 300px 1fr
+            }
 
-        .btn-chip.x.on {
-            border-color: var(--blue);
-            color: var(--blue);
-            background: #0a2040
-        }
+            .mini-circ canvas {
+                width: 112px;
+                height: 112px
+            }
 
-        .btn-chip.x.on .dot {
-            background: var(--blue);
-            box-shadow: 0 0 7px var(--blue)
-        }
-
-        .btn-chip.y.on {
-            border-color: var(--yellow);
-            color: var(--yellow);
-            background: #2a2305
-        }
-
-        .btn-chip.y.on .dot {
-            background: var(--yellow);
-            box-shadow: 0 0 7px var(--yellow)
-        }
-
-        .btn-chip.tested {
-            border-color: var(--dim)
-        }
-
-        .tools {
-            margin-top: 14px;
-            display: grid;
-            gap: 10px
-        }
-
-        .tool-card {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: rgba(17, 24, 32, .78);
-            padding: 10px
-        }
-
-        .tool-title {
-            font: 10px 'Share Tech Mono', monospace;
-            letter-spacing: .16em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 8px
-        }
-
-        .row {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            flex-wrap: wrap
-        }
-
-        .ui-btn {
-            border: 1px solid var(--border);
-            background: #0f1620;
-            color: var(--text);
-            border-radius: 8px;
-            padding: 7px 9px;
-            font: 700 12px Rajdhani, sans-serif;
-            cursor: pointer
-        }
-
-        .ui-btn:hover,
-        .ui-btn.active {
-            border-color: var(--accent);
-            color: var(--accent)
-        }
-
-        .select {
-            background: #0f1620;
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 7px;
-            font: 12px 'Share Tech Mono', monospace
-        }
-
-        .metric {
-            font: 11px 'Share Tech Mono', monospace;
-            color: var(--muted);
-            line-height: 1.7;
-            margin-top: 7px
-        }
-
-        .metric b {
-            color: var(--accent)
-        }
-
-        .axes-section {
-            width: 100%;
-            max-width: 1040px;
-            margin-top: 12px
-        }
-
-        .axes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 8px
-        }
-
-        .axis-cell {
-            background: rgba(22, 27, 36, .85);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 10px
-        }
-
-        .axis-name {
-            font: 10px 'Share Tech Mono', monospace;
-            color: var(--muted);
-            margin-bottom: 5px
-        }
-
-        .axis-bar-wrap {
-            height: 4px;
-            background: var(--dim);
-            border-radius: 2px;
-            position: relative;
-            margin-bottom: 5px
-        }
-
-        .axis-bar-wrap::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: -2px;
-            width: 1px;
-            height: 8px;
-            background: var(--border)
-        }
-
-        .axis-bar {
-            position: absolute;
-            height: 100%;
-            background: var(--accent);
-            border-radius: 2px;
-            top: 0
-        }
-
-        .axis-val {
-            font: 11px 'Share Tech Mono', monospace;
-            color: var(--text);
-            font-weight: bold
-        }
-
-        @media(max-width:980px) {
-            .main {
-                grid-template-columns: 1fr
+            .mini-circ {
+                width: 145px
             }
 
             .controller-wrap {
-                transform: scale(.92);
-                transform-origin: top center;
-                height: 435px
+                max-height: 455px
+            }
+        }
+
+        @media(max-width:1180px) {
+            body {
+                overflow: auto
+            }
+
+            .dashboard {
+                height: auto;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                grid-template-areas: 'pad' 'side' 'tools'
+            }
+
+            .pad-area {
+                height: 470px
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr 1fr
             }
 
             .side-panel {
                 max-width: 760px;
-                width: 100%;
-                margin: auto
-            }
-
-            .btn-track {
-                grid-template-columns: repeat(3, 1fr)
+                margin: auto;
+                width: 100%
             }
         }
     </style>
@@ -529,110 +670,124 @@
         <div id="status-dot"></div><span id="status-text">Menunggu controller — colok USB / Bluetooth, lalu tekan tombol
             apa pun</span><span id="input-count"></span>
     </div>
-    <div class="main">
-        <div class="controller-wrap">
-            <svg id="controller-svg" viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <filter id="glow">
-                        <feGaussianBlur stdDeviation="3" result="b" />
-                        <feMerge>
-                            <feMergeNode in="b" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
-                </defs>
-                <path
-                    d="M245 95 C215 55 135 50 93 105 C48 164 32 247 44 323 C58 411 125 454 186 415 C220 393 238 347 282 335 C315 326 445 326 478 335 C522 347 540 393 574 415 C635 454 702 411 716 323 C728 247 712 164 667 105 C625 50 545 55 515 95 C490 126 458 135 380 135 C302 135 270 126 245 95 Z"
-                    fill="#141b25" stroke="#252d3a" stroke-width="1.7" />
-                <path d="M83 98 C96 48 214 35 248 86 L228 126 C188 110 131 112 87 132 Z" fill="#0e1520" stroke="#252d3a"
-                    stroke-width="1.4" id="lt-shape" />
-                <path d="M677 98 C664 48 546 35 512 86 L532 126 C572 110 629 112 673 132 Z" fill="#0e1520"
-                    stroke="#252d3a" stroke-width="1.4" id="rt-shape" />
-                <path d="M105 132 C130 116 200 116 226 132 L217 163 C185 153 147 153 115 163 Z" fill="#161e2a"
-                    stroke="#252d3a" stroke-width="1" id="lb-shape" />
-                <path d="M655 132 C630 116 560 116 534 132 L543 163 C575 153 613 153 645 163 Z" fill="#161e2a"
-                    stroke="#252d3a" stroke-width="1" id="rb-shape" />
-                <text x="166" y="151" text-anchor="middle" font-size="12" fill="#3a4a5a" font-family="Rajdhani"
-                    font-weight="700">LB</text><text x="594" y="151" text-anchor="middle" font-size="12" fill="#3a4a5a"
-                    font-family="Rajdhani" font-weight="700">RB</text>
-                <text x="166" y="87" text-anchor="middle" font-size="12" fill="#3a4a5a" font-family="Rajdhani"
-                    font-weight="700">LT</text><text x="594" y="87" text-anchor="middle" font-size="12" fill="#3a4a5a"
-                    font-family="Rajdhani" font-weight="700">RT</text>
-                <circle cx="380" cy="194" r="19" fill="#0e1520" stroke="#1e2733" id="xbox-btn" /><text x="380" y="200"
-                    text-anchor="middle" font-size="12" fill="#3a4a5a" font-family="Rajdhani" font-weight="700">X</text>
-                <circle cx="332" cy="205" r="12" fill="#111820" stroke="#1e2733" id="view-btn" /><text x="332" y="209"
-                    text-anchor="middle" font-size="10" fill="#3a4a5a" font-family="Rajdhani">▣</text>
-                <circle cx="428" cy="205" r="12" fill="#111820" stroke="#1e2733" id="menu-btn" /><text x="428" y="209"
-                    text-anchor="middle" font-size="12" fill="#3a4a5a" font-family="Rajdhani">☰</text>
-                <circle cx="218" cy="200" r="45" fill="#0a1018" stroke="#1e2733" stroke-width="1.5" />
-                <circle cx="506" cy="328" r="45" fill="#0a1018" stroke="#1e2733" stroke-width="1.5" />
-                <g id="dpad">
-                    <rect x="185" y="300" width="38" height="38" rx="5" fill="#0e1520" stroke="#1e2733" />
-                    <rect x="191" y="277" width="26" height="26" rx="4" fill="#111820" stroke="#1e2733" id="dpad-up" />
-                    <text x="204" y="294" text-anchor="middle" font-size="10" fill="#2a3a4a"
-                        font-family="Rajdhani">▲</text>
-                    <rect x="191" y="337" width="26" height="26" rx="4" fill="#111820" stroke="#1e2733" id="dpad-dn" />
-                    <text x="204" y="354" text-anchor="middle" font-size="10" fill="#2a3a4a"
-                        font-family="Rajdhani">▼</text>
-                    <rect x="161" y="307" width="26" height="26" rx="4" fill="#111820" stroke="#1e2733" id="dpad-lt" />
-                    <text x="174" y="324" text-anchor="middle" font-size="10" fill="#2a3a4a"
-                        font-family="Rajdhani">◀</text>
-                    <rect x="221" y="307" width="26" height="26" rx="4" fill="#111820" stroke="#1e2733" id="dpad-rt" />
-                    <text x="234" y="324" text-anchor="middle" font-size="10" fill="#2a3a4a"
-                        font-family="Rajdhani">▶</text>
-                </g>
-                <circle cx="595" cy="196" r="15" fill="#111820" stroke="#1e2733" stroke-width="1.5" id="btn-y" /><text
-                    x="595" y="201" text-anchor="middle" font-size="13" fill="#8f8026" font-family="Rajdhani"
-                    font-weight="800">Y</text>
-                <circle cx="625" cy="226" r="15" fill="#111820" stroke="#1e2733" stroke-width="1.5" id="btn-b" /><text
-                    x="625" y="231" text-anchor="middle" font-size="13" fill="#882244" font-family="Rajdhani"
-                    font-weight="800">B</text>
-                <circle cx="595" cy="256" r="15" fill="#111820" stroke="#1e2733" stroke-width="1.5" id="btn-a" /><text
-                    x="595" y="261" text-anchor="middle" font-size="13" fill="#226644" font-family="Rajdhani"
-                    font-weight="800">A</text>
-                <circle cx="565" cy="226" r="15" fill="#111820" stroke="#1e2733" stroke-width="1.5" id="btn-x" /><text
-                    x="565" y="231" text-anchor="middle" font-size="13" fill="#224488" font-family="Rajdhani"
-                    font-weight="800">X</text>
-            </svg>
-            <div class="trigger-zone left">
-                <div class="trigger-label">LT</div>
-                <div class="trigger-track">
-                    <div class="trigger-fill" id="l2-fill"></div>
+    <div class="dashboard">
+        <section class="pad-area">
+            <div class="controller-wrap">
+                <svg id="controller-svg" viewBox="0 0 970 500" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="3" result="b" />
+                            <feMerge>
+                                <feMergeNode in="b" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <path
+                        d="M250 92 C220 35 135 55 105 138 C70 236 66 390 155 420 C205 436 232 365 285 330 C330 300 640 300 685 330 C738 365 765 436 815 420 C904 390 900 236 865 138 C835 55 750 35 720 92 C690 148 630 155 485 155 C340 155 280 148 250 92 Z"
+                        fill="#121b26" stroke="#283448" stroke-width="2" />
+                    <path id="lt-shape" d="M165 88 C175 36 260 28 285 70 L266 116 C230 103 195 105 160 122 Z"
+                        fill="#0b131d" stroke="#2a374a" stroke-width="2" />
+                    <path id="rt-shape" d="M805 88 C795 36 710 28 685 70 L704 116 C740 103 775 105 810 122 Z"
+                        fill="#0b131d" stroke="#2a374a" stroke-width="2" />
+                    <path id="lb-shape" d="M188 134 C218 119 248 119 278 134 L268 170 C240 158 216 158 196 170 Z"
+                        fill="#111a25" stroke="#2a374a" stroke-width="1.6" />
+                    <path id="rb-shape" d="M782 134 C752 119 722 119 692 134 L702 170 C730 158 754 158 774 170 Z"
+                        fill="#111a25" stroke="#2a374a" stroke-width="1.6" />
+                    <text x="223" y="84" text-anchor="middle" font-size="18" fill="#7893b0"
+                        font-family="Share Tech Mono">LT</text><text x="747" y="84" text-anchor="middle" font-size="18"
+                        fill="#7893b0" font-family="Share Tech Mono">RT</text>
+                    <text x="233" y="153" text-anchor="middle" font-size="17" fill="#7893b0"
+                        font-family="Share Tech Mono">LB</text><text x="737" y="153" text-anchor="middle" font-size="17"
+                        fill="#7893b0" font-family="Share Tech Mono">RB</text>
+                    <circle cx="485" cy="190" r="26" fill="#0b131d" stroke="#253347" id="xbox-btn" /><text x="485"
+                        y="200" text-anchor="middle" font-size="24" fill="#8da6c2" font-family="Rajdhani"
+                        font-weight="800">X</text>
+                    <circle cx="415" cy="220" r="16" fill="#0b131d" stroke="#253347" id="view-btn" /><text x="415"
+                        y="226" text-anchor="middle" font-size="18" fill="#8da6c2" font-family="Rajdhani">▣</text>
+                    <circle cx="555" cy="220" r="16" fill="#0b131d" stroke="#253347" id="menu-btn" /><text x="555"
+                        y="226" text-anchor="middle" font-size="18" fill="#8da6c2" font-family="Rajdhani">☰</text>
+                    <circle cx="278" cy="220" r="58" fill="#08111a" stroke="#26364a" stroke-width="2" />
+                    <circle cx="608" cy="302" r="58" fill="#08111a" stroke="#26364a" stroke-width="2" />
+                    <g id="dpad">
+                        <path d="M245 320 h38 v-38 h54 v38 h38 v54 h-38 v38 h-54 v-38 h-38 z" fill="#0b131d"
+                            stroke="#2a374a" stroke-width="2" />
+                        <rect id="dpad-up" x="289" y="288" width="42" height="40" rx="7" fill="#121b25" />
+                        <rect id="dpad-dn" x="289" y="366" width="42" height="40" rx="7" fill="#121b25" />
+                        <rect id="dpad-lt" x="251" y="326" width="40" height="42" rx="7" fill="#121b25" />
+                        <rect id="dpad-rt" x="329" y="326" width="40" height="42" rx="7" fill="#121b25" /><text x="310"
+                            y="314" text-anchor="middle" font-size="19" fill="#526981">▲</text><text x="310" y="393"
+                            text-anchor="middle" font-size="19" fill="#526981">▼</text><text x="272" y="353"
+                            text-anchor="middle" font-size="19" fill="#526981">◀</text><text x="349" y="353"
+                            text-anchor="middle" font-size="19" fill="#526981">▶</text>
+                    </g>
+                    <circle cx="708" cy="184" r="24" fill="#0b131d" stroke="#26364a" stroke-width="2" id="btn-y" /><text
+                        x="708" y="194" text-anchor="middle" font-size="31" fill="#d2bf2f" font-family="Rajdhani"
+                        font-weight="800">Y</text>
+                    <circle cx="760" cy="232" r="24" fill="#0b131d" stroke="#26364a" stroke-width="2" id="btn-b" /><text
+                        x="760" y="242" text-anchor="middle" font-size="31" fill="#bd3154" font-family="Rajdhani"
+                        font-weight="800">B</text>
+                    <circle cx="708" cy="280" r="24" fill="#0b131d" stroke="#26364a" stroke-width="2" id="btn-a" /><text
+                        x="708" y="290" text-anchor="middle" font-size="31" fill="#2cb65f" font-family="Rajdhani"
+                        font-weight="800">A</text>
+                    <circle cx="656" cy="232" r="24" fill="#0b131d" stroke="#26364a" stroke-width="2" id="btn-x" /><text
+                        x="656" y="242" text-anchor="middle" font-size="31" fill="#228be8" font-family="Rajdhani"
+                        font-weight="800">X</text>
+                </svg>
+                <div class="trigger-zone left">
+                    <div>LT</div>
+                    <div class="trigger-track">
+                        <div class="trigger-fill" id="l2-fill"></div>
+                    </div>
+                    <div class="trigger-val" id="l2-val">0%</div>
                 </div>
-                <div class="trigger-val" id="l2-val">0%</div>
-            </div>
-            <div class="trigger-zone right">
-                <div class="trigger-label">RT</div>
-                <div class="trigger-track">
-                    <div class="trigger-fill r" id="r2-fill"></div>
+                <div class="trigger-zone right">
+                    <div>RT</div>
+                    <div class="trigger-track">
+                        <div class="trigger-fill r" id="r2-fill"></div>
+                    </div>
+                    <div class="trigger-val r" id="r2-val">0%</div>
                 </div>
-                <div class="trigger-val r" id="r2-val">0%</div>
-            </div>
-            <div class="stick-overlay left" id="ls-wrap">
-                <div class="stick-ring">
-                    <div class="stick-crosshair"></div>
-                    <div class="stick-crosshair v"></div><canvas class="trail" id="ls-trail" width="84"
-                        height="84"></canvas>
-                    <div class="stick-dot" id="ls-dot"></div>
+                <div class="stick-overlay left" id="ls-wrap">
+                    <div class="stick-ring">
+                        <div class="stick-crosshair"></div>
+                        <div class="stick-crosshair v"></div><canvas class="circ-canvas" id="ls-circ" width="86"
+                            height="86"></canvas><canvas class="trail" id="ls-trail" width="86" height="86"></canvas>
+                        <div class="stick-dot" id="ls-dot"></div>
+                        <div class="avg-error" id="ls-avg">
+                            <div><small>AVG ERROR</small><span>—</span></div>
+                        </div>
+                    </div>
+                    <div class="stick-info">
+                        <div><span class="lab">AXIS 0 (L)</span> <span id="ls-x">0.000</span></div>
+                        <div><span class="lab">AXIS 1 (L)</span> <span id="ls-y">0.000</span></div>
+                        <div><span class="lab">RAD</span> <span id="ls-rad">0.00</span></div>
+                    </div>
+                    <div class="drift-badge" id="ls-drift"></div>
                 </div>
-                <div class="stick-info"><span id="ls-x">0.000</span><span id="ls-y">0.000</span></div>
-                <div class="drift-badge drift-none" id="ls-drift">drift: —</div>
-            </div>
-            <div class="stick-overlay right r" id="rs-wrap">
-                <div class="stick-ring">
-                    <div class="stick-crosshair"></div>
-                    <div class="stick-crosshair v"></div><canvas class="trail" id="rs-trail" width="84"
-                        height="84"></canvas>
-                    <div class="stick-dot r" id="rs-dot"></div>
+                <div class="stick-overlay right r" id="rs-wrap">
+                    <div class="stick-ring">
+                        <div class="stick-crosshair"></div>
+                        <div class="stick-crosshair v"></div><canvas class="circ-canvas" id="rs-circ" width="86"
+                            height="86"></canvas><canvas class="trail" id="rs-trail" width="86" height="86"></canvas>
+                        <div class="stick-dot r" id="rs-dot"></div>
+                        <div class="avg-error" id="rs-avg">
+                            <div><small>AVG ERROR</small><span>—</span></div>
+                        </div>
+                    </div>
+                    <div class="stick-info">
+                        <div><span class="lab">AXIS 2 (R)</span> <span id="rs-x">0.000</span></div>
+                        <div><span class="lab">AXIS 3 (R)</span> <span id="rs-y">0.000</span></div>
+                        <div><span class="lab">RAD</span> <span id="rs-rad">0.00</span></div>
+                    </div>
+                    <div class="drift-badge" id="rs-drift"></div>
                 </div>
-                <div class="stick-info"><span id="rs-x">0.000</span><span id="rs-y">0.000</span></div>
-                <div class="drift-badge drift-none" id="rs-drift">drift: —</div>
             </div>
-        </div>
+        </section>
         <aside class="side-panel">
             <div class="section-label">Buttons</div>
             <div class="btn-track" id="btn-track"></div>
-            <div class="tools">
+            <div class="side-tools">
                 <div class="tool-card">
                     <div class="tool-title">Analog Path</div>
                     <div class="row"><button class="ui-btn active" id="history-btn">History ON</button><button
@@ -640,45 +795,68 @@
                 </div>
                 <div class="tool-card">
                     <div class="tool-title">Circularity Test</div>
-                    <div class="row"><select class="select" id="circ-stick">
-                            <option value="left">Left</option>
-                            <option value="right">Right</option>
-                        </select><button class="ui-btn" id="circ-btn">Start</button><button class="ui-btn"
+                    <div class="row"><button class="ui-btn active" id="circ-btn">Test OFF</button><button class="ui-btn"
                             id="circ-clear">Reset</button></div>
-                    <div class="metric" id="circ-metric">Putar analog 360°. Max: <b>—</b><br>Coverage: <b>—</b> |
-                        Circularity: <b>—</b></div>
-                </div>
-                <div class="tool-card">
-                    <div class="tool-title">Vibration</div>
-                    <div class="row"><button class="ui-btn vib" data-weak="0.25" data-strong="0.1">Soft</button><button
-                            class="ui-btn vib" data-weak="0.45" data-strong="0.55">Hard</button><button
-                            class="ui-btn vib" data-weak="1" data-strong="1">Full</button><button class="ui-btn"
-                            id="vib-inf">Infinite</button><button class="ui-btn" id="vib-stop">Stop</button></div>
-                    <div class="metric" id="vib-status">Status: —</div>
+                    <div class="metric" id="circ-metric">ON untuk test dua analog barengan.<br>Left: <b>—</b> | Right:
+                        <b>—</b></div>
                 </div>
             </div>
         </aside>
-    </div>
-    <div class="axes-section">
-        <div class="section-label">Axes raw</div>
-        <div class="axes-grid" id="axes-grid"></div>
+        <section class="tools-grid">
+            <div class="tool-card">
+                <div class="tool-title">Analog Path</div>
+                <div class="legend"><i class="l-green"></i>Left Stick Path<br><i class="l-blue"></i>Right Stick Path
+                </div>
+            </div>
+            <div class="tool-card">
+                <div class="tool-title">Circularity Test</div>
+                <div class="mini-circ-wrap">
+                    <div class="mini-circ"><canvas id="mini-l" width="128" height="128"></canvas>
+                        <div>LEFT STICK</div>
+                        <div>Avg Error: <b id="mini-l-err">—</b></div>
+                        <div>Coverage: <span id="mini-l-cov">—</span></div>
+                    </div>
+                    <div class="mini-circ right"><canvas id="mini-r" width="128" height="128"></canvas>
+                        <div>RIGHT STICK</div>
+                        <div>Avg Error: <b id="mini-r-err">—</b></div>
+                        <div>Coverage: <span id="mini-r-cov">—</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-card">
+                <div class="tool-title">Vibration Test</div>
+                <div class="row"><button class="ui-btn vib" data-weak="0.25" data-strong="0.1">Soft</button><button
+                        class="ui-btn vib" data-weak="0.45" data-strong="0.55">Hard</button><button
+                        class="ui-btn vib blue" data-weak="1" data-strong="1">Full</button><button class="ui-btn blue"
+                        id="vib-inf">∞ Infinite</button><button class="ui-btn" id="vib-stop">Stop</button></div>
+                <div class="metric" id="vib-status">Status: —</div>
+            </div>
+            <div class="tool-card">
+                <div class="tool-title">Axis Values</div>
+                <div class="axis-list" id="axis-list"></div>
+            </div>
+        </section>
     </div>
     <script>
         const BTN_DEFS = [{ n: 'A', svg: 'btn-a', cls: 'a' }, { n: 'B', svg: 'btn-b', cls: 'b' }, { n: 'X', svg: 'btn-x', cls: 'x' }, { n: 'Y', svg: 'btn-y', cls: 'y' }, { n: 'LB', svg: 'lb-shape' }, { n: 'RB', svg: 'rb-shape' }, { n: 'LT', svg: 'lt-shape' }, { n: 'RT', svg: 'rt-shape' }, { n: 'View', svg: 'view-btn' }, { n: 'Menu', svg: 'menu-btn' }, { n: 'LS' }, { n: 'RS' }, { n: 'D-Up', svg: 'dpad-up' }, { n: 'D-Down', svg: 'dpad-dn' }, { n: 'D-Left', svg: 'dpad-lt' }, { n: 'D-Right', svg: 'dpad-rt' }, { n: 'Xbox', svg: 'xbox-btn' }];
-        let started = false, lsTrail = [], rsTrail = [], testedSet = new Set(), historyOn = true, circOn = false, circPts = [], vibTimer = null; const TRAIL_LEN = 90;
+        let started = false, lsTrail = [], rsTrail = [], testedSet = new Set(), historyOn = true, circOn = false, vibTimer = null, lastTime = performance.now(), frames = 0, fps = 0; const TRAIL_LEN = 150, CIRC_BINS = 72;
+        let circData = { left: { bins: new Array(CIRC_BINS).fill(0), samples: 0 }, right: { bins: new Array(CIRC_BINS).fill(0), samples: 0 } };
         function buildButtons() { const t = document.getElementById('btn-track'); t.innerHTML = ''; BTN_DEFS.forEach((b, i) => { const c = document.createElement('div'); c.className = 'btn-chip ' + (b.cls || ''); c.id = 'chip-' + i; c.innerHTML = `<span class="dot"></span>${b.n}`; t.appendChild(c) }) }
-        function buildAxes(count) { const g = document.getElementById('axes-grid'); g.innerHTML = ''; for (let i = 0; i < count; i++)g.innerHTML += `<div class="axis-cell"><div class="axis-name">Axis ${i}</div><div class="axis-bar-wrap"><div class="axis-bar" id="ax-bar-${i}" style="left:50%;width:0%"></div></div><div class="axis-val" id="ax-val-${i}">0.0000</div></div>` }
-        function getDrift(x, y) { const m = Math.hypot(x, y); if (m < .01) return { label: 'none', cls: 'drift-none', m }; if (m < .06) return { label: 'low', cls: 'drift-low', m }; if (m < .15) return { label: 'moderate', cls: 'drift-moderate', m }; return { label: 'SEVERE', cls: 'drift-severe', m } }
-        function drawTrail(ctx, pts, color) { ctx.clearRect(0, 0, 84, 84); if (!historyOn || pts.length < 2) return; for (let i = 1; i < pts.length; i++) { const a = i / pts.length * .55; ctx.beginPath(); ctx.strokeStyle = color.replace('1)', a + ')'); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.moveTo(pts[i - 1].x, pts[i - 1].y); ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke() } }
-        function updateStick(ax, ay, dotId, xId, yId, driftId, wrapId, trailId, arr, color) { const px = ax * 35, py = ay * 35; document.getElementById(dotId).style.transform = `translate(${px}px,${py}px)`; document.getElementById(xId).textContent = ax.toFixed(3); document.getElementById(yId).textContent = ay.toFixed(3); if (historyOn) { arr.push({ x: 42 + px, y: 42 + py }); if (arr.length > TRAIL_LEN) arr.shift() } const ctx = document.getElementById(trailId).getContext('2d'); drawTrail(ctx, arr, color); const d = getDrift(ax, ay), de = document.getElementById(driftId); de.textContent = `drift: ${d.label} (${(d.m * 100).toFixed(1)}%)`; de.className = 'drift-badge ' + d.cls; document.getElementById(wrapId).classList.toggle('stick-active', Math.abs(ax) > .05 || Math.abs(ay) > .05) }
-        function svgHighlight(id, on, color = '#00b3ff') { const el = document.getElementById(id); if (!el) return; el.style.fill = on ? color : ''; el.style.stroke = on ? color : ''; el.style.filter = on ? 'url(#glow)' : '' }
-        function updateCircularity(ax, ay) { if (!circOn) return; const stick = document.getElementById('circ-stick').value; if ((stick === 'left' && arguments[2]) || (stick === 'right' && !arguments[2])) return; const r = Math.hypot(ax, ay); if (r > .55) circPts.push({ x: ax, y: ay, a: Math.atan2(ay, ax), r }); if (circPts.length > 2500) circPts.shift(); const bins = new Array(36).fill(0); let max = 0, min = 9, sum = 0; circPts.forEach(p => { let bi = Math.floor(((p.a + Math.PI) / (Math.PI * 2)) * 36) % 36; bins[bi] = 1; max = Math.max(max, p.r); min = Math.min(min, p.r); sum += p.r }); const coverage = bins.reduce((a, b) => a + b, 0) / 36 * 100; const avg = circPts.length ? sum / circPts.length : 0; const circularity = max ? Math.max(0, 100 - (Math.abs(1 - avg) + Math.abs(1 - min)) * 50) : 0; document.getElementById('circ-metric').innerHTML = `Putar analog 360°. Max: <b>${(max * 100).toFixed(1)}%</b><br>Coverage: <b>${coverage.toFixed(0)}%</b> | Circularity: <b>${circularity.toFixed(0)}%</b>` }
         function getPad() { const pads = navigator.getGamepads ? navigator.getGamepads() : []; return [...pads].find(Boolean) }
-        async function vibrate(weak, strong, duration = 500) { const gp = getPad(); const act = gp && (gp.vibrationActuator || gp.hapticActuators?.[0]); if (!act) { document.getElementById('vib-status').textContent = 'Status: vibration tidak didukung browser/controller'; return } try { if (act.playEffect) await act.playEffect('dual-rumble', { startDelay: 0, duration, weakMagnitude: weak, strongMagnitude: strong }); else if (act.pulse) await act.pulse(Math.max(weak, strong), duration); document.getElementById('vib-status').textContent = `Status: vibrate ${duration}ms` } catch (e) { document.getElementById('vib-status').textContent = 'Status: gagal vibrate' } }
-        function update() { const gp = getPad(); if (gp) { const ax = gp.axes; const lx = ax[0] || 0, ly = ax[1] || 0, rx = ax[2] || 0, ry = ax[3] || 0; updateStick(lx, ly, 'ls-dot', 'ls-x', 'ls-y', 'ls-drift', 'ls-wrap', 'ls-trail', lsTrail, 'rgba(0,229,160,1)'); updateStick(rx, ry, 'rs-dot', 'rs-x', 'rs-y', 'rs-drift', 'rs-wrap', 'rs-trail', rsTrail, 'rgba(0,179,255,1)'); updateCircularity(lx, ly, true); updateCircularity(rx, ry, false); let lt = gp.buttons[6]?.value || 0, rt = gp.buttons[7]?.value || 0; document.getElementById('l2-fill').style.width = (lt * 100).toFixed(1) + '%'; document.getElementById('l2-val').textContent = (lt * 100).toFixed(0) + '%'; document.getElementById('r2-fill').style.width = (rt * 100).toFixed(1) + '%'; document.getElementById('r2-val').textContent = (rt * 100).toFixed(0) + '%'; ax.forEach((v, i) => { const bar = document.getElementById('ax-bar-' + i), val = document.getElementById('ax-val-' + i); if (!bar || !val) return; const pct = Math.abs(v) * 50; bar.style.left = v >= 0 ? '50%' : (50 - pct).toFixed(1) + '%'; bar.style.width = pct.toFixed(1) + '%'; bar.style.background = v < 0 ? '#ff4444' : '#00e5a0'; val.textContent = v.toFixed(4) }); gp.buttons.forEach((btn, i) => { const def = BTN_DEFS[i], chip = document.getElementById('chip-' + i); if (!def || !chip) return; const on = btn.pressed || btn.value > .5; if (on) testedSet.add(i); chip.className = 'btn-chip ' + (def.cls || '') + (on ? ' on' : (testedSet.has(i) ? ' tested' : '')); if (def.svg) { const colors = { a: '#116633', b: '#aa1133', x: '#1155cc', y: '#b9a330' }; svgHighlight(def.svg, on, colors[def.cls] || '#00b3ff') } }); document.getElementById('input-count').textContent = `${testedSet.size} / ${gp.buttons.length} inputs tested` } requestAnimationFrame(update) }
-        window.addEventListener('gamepadconnected', e => { document.getElementById('status-dot').classList.add('on'); document.getElementById('status-text').textContent = e.gamepad.id; buildAxes(e.gamepad.axes.length); if (!started) { started = true; requestAnimationFrame(update) } }); window.addEventListener('gamepaddisconnected', () => { document.getElementById('status-dot').classList.remove('on'); document.getElementById('status-text').textContent = 'Controller terputus'; document.getElementById('input-count').textContent = '' });
-        document.getElementById('history-btn').onclick = e => { historyOn = !historyOn; e.target.classList.toggle('active', historyOn); e.target.textContent = historyOn ? 'History ON' : 'History OFF'; if (!historyOn) { lsTrail = []; rsTrail = [] } }; document.getElementById('clear-path-btn').onclick = () => { lsTrail = []; rsTrail = [] }; document.getElementById('circ-btn').onclick = e => { circOn = !circOn; e.target.classList.toggle('active', circOn); e.target.textContent = circOn ? 'Stop' : 'Start' }; document.getElementById('circ-clear').onclick = () => { circPts = []; document.getElementById('circ-metric').innerHTML = 'Putar analog 360°. Max: <b>—</b><br>Coverage: <b>—</b> | Circularity: <b>—</b>' }; document.querySelectorAll('.vib').forEach(b => b.onclick = () => vibrate(+b.dataset.weak, +b.dataset.strong, 650)); document.getElementById('vib-inf').onclick = e => { if (vibTimer) { clearInterval(vibTimer); vibTimer = null; e.target.classList.remove('active'); e.target.textContent = 'Infinite'; vibrate(0, 0, 1); return } e.target.classList.add('active'); e.target.textContent = 'Inf ON'; vibrate(.7, .7, 900); vibTimer = setInterval(() => vibrate(.7, .7, 900), 850) }; document.getElementById('vib-stop').onclick = () => { if (vibTimer) clearInterval(vibTimer); vibTimer = null; document.getElementById('vib-inf').classList.remove('active'); document.getElementById('vib-inf').textContent = 'Infinite'; vibrate(0, 0, 1); document.getElementById('vib-status').textContent = 'Status: stop' };
-        buildButtons();
+        function drawTrail(ctx, pts, color) { ctx.clearRect(0, 0, 86, 86); if (!historyOn || pts.length < 2) return; for (let i = 1; i < pts.length; i++) { const a = i / pts.length * .65; ctx.beginPath(); ctx.strokeStyle = color.replace('1)', a + ')'); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.moveTo(pts[i - 1].x, pts[i - 1].y); ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke() } }
+        function updateStick(ax, ay, ids, arr, color) { const px = ax * 35, py = ay * 35, rad = Math.hypot(ax, ay); document.getElementById(ids.dot).style.transform = `translate(${px}px,${py}px)`; document.getElementById(ids.x).textContent = ax.toFixed(3); document.getElementById(ids.y).textContent = ay.toFixed(3); document.getElementById(ids.rad).textContent = rad.toFixed(2); if (historyOn) { arr.push({ x: 43 + px, y: 43 + py }); if (arr.length > TRAIL_LEN) arr.shift() } drawTrail(document.getElementById(ids.trail).getContext('2d'), arr, color); document.getElementById(ids.wrap).classList.toggle('stick-active', rad > .05) }
+        function svgHighlight(id, on, color = '#00b3ff') { const el = document.getElementById(id); if (!el) return; el.style.fill = on ? color : ''; el.style.stroke = on ? color : ''; el.style.filter = on ? 'url(#glow)' : '' }
+        function calcCirc(d) { const err = d.bins.reduce((s, r) => s + Math.max(0, 1 - Math.min(r, 1)), 0) / CIRC_BINS * 100; const cov = d.bins.filter(r => r >= .90).length / CIRC_BINS * 100; const max = Math.max(...d.bins, 0); return { err, cov, max, samples: d.samples } }
+        function drawCircCanvas(id, data, color) { const c = document.getElementById(id), ctx = c.getContext('2d'), w = c.width, h = c.height, cx = w / 2, cy = h / 2, R = 39; ctx.clearRect(0, 0, w, h); if (!circOn) return; c.style.display = 'block'; ctx.strokeStyle = 'rgba(180,210,255,.22)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke(); for (let i = 0; i < CIRC_BINS; i++) { const a0 = (i / CIRC_BINS) * Math.PI * 2 - Math.PI; const a1 = ((i + 1) / CIRC_BINS) * Math.PI * 2 - Math.PI; const r = Math.min(data.bins[i], 1); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath(); ctx.fillStyle = r > .9 ? color.replace('1)', '.30)') : r > .45 ? color.replace('1)', '.16)') : 'rgba(255,255,255,.06)'; ctx.fill(); ctx.strokeStyle = r > .9 ? color.replace('1)', '.75)') : 'rgba(110,130,160,.16)'; ctx.lineWidth = .7; ctx.stroke() } ctx.beginPath(); ctx.arc(cx, cy, R * .5, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(180,210,255,.18)'; ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.strokeStyle = 'rgba(180,210,255,.18)'; ctx.stroke() }
+        function drawMini(id, data, color) { const c = document.getElementById(id), ctx = c.getContext('2d'), w = c.width, h = c.height, cx = w / 2, cy = h / 2, R = 56; ctx.clearRect(0, 0, w, h); ctx.strokeStyle = 'rgba(180,210,255,.22)'; ctx.lineWidth = 1; for (let k = 1; k <= 2; k++) { ctx.beginPath(); ctx.arc(cx, cy, R * k / 2, 0, Math.PI * 2); ctx.stroke() } for (let i = 0; i < CIRC_BINS; i++) { const a0 = (i / CIRC_BINS) * Math.PI * 2 - Math.PI, a1 = ((i + 1) / CIRC_BINS) * Math.PI * 2 - Math.PI, r = Math.min(data.bins[i], 1); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath(); ctx.fillStyle = r > .9 ? color.replace('1)', '.23)') : r > .45 ? color.replace('1)', '.12)') : 'rgba(255,255,255,.04)'; ctx.fill(); ctx.strokeStyle = r > .9 ? color.replace('1)', '.75)') : 'rgba(120,145,175,.18)'; ctx.stroke() } ctx.fillStyle = color; ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill() }
+        function renderCircularity() { const l = calcCirc(circData.left), r = calcCirc(circData.right); document.querySelector('#ls-avg span').textContent = l.samples ? l.err.toFixed(1) + '%' : '—'; document.querySelector('#rs-avg span').textContent = r.samples ? r.err.toFixed(1) + '%' : '—'; document.getElementById('ls-avg').classList.toggle('on', circOn); document.getElementById('rs-avg').classList.toggle('on', circOn); document.getElementById('ls-circ').style.display = circOn ? 'block' : 'none'; document.getElementById('rs-circ').style.display = circOn ? 'block' : 'none'; drawCircCanvas('ls-circ', circData.left, 'rgba(0,240,168,1)'); drawCircCanvas('rs-circ', circData.right, 'rgba(25,191,255,1)'); drawMini('mini-l', circData.left, 'rgba(0,240,168,1)'); drawMini('mini-r', circData.right, 'rgba(25,191,255,1)'); document.getElementById('mini-l-err').textContent = l.samples ? l.err.toFixed(1) + '%' : '—'; document.getElementById('mini-r-err').textContent = r.samples ? r.err.toFixed(1) + '%' : '—'; document.getElementById('mini-l-cov').textContent = l.samples ? l.cov.toFixed(1) + '%' : '—'; document.getElementById('mini-r-cov').textContent = r.samples ? r.cov.toFixed(1) + '%' : '—'; document.getElementById('circ-metric').innerHTML = `ON untuk test dua analog barengan.<br>Left: <b>${l.samples ? l.err.toFixed(1) + '%' : '—'}</b> | Right: <b>${r.samples ? r.err.toFixed(1) + '%' : '—'}</b>` }
+        function updateCirc(name, ax, ay) { if (!circOn) return; const r = Math.hypot(ax, ay); if (r < .25) return; const a = Math.atan2(ay, ax); const bi = Math.floor(((a + Math.PI) / (Math.PI * 2)) * CIRC_BINS) % CIRC_BINS; circData[name].bins[bi] = Math.max(circData[name].bins[bi], Math.min(r, 1)); circData[name].samples++ }
+        async function vibrate(weak, strong, duration = 600) { const gp = getPad(), act = gp && (gp.vibrationActuator || gp.hapticActuators?.[0]); if (!act) { document.getElementById('vib-status').textContent = 'Status: vibration tidak didukung'; return } try { if (act.playEffect) await act.playEffect('dual-rumble', { startDelay: 0, duration, weakMagnitude: weak, strongMagnitude: strong }); else if (act.pulse) await act.pulse(Math.max(weak, strong), duration); document.getElementById('vib-status').textContent = `Status: vibrate ${duration}ms` } catch (e) { document.getElementById('vib-status').textContent = 'Status: gagal vibrate' } }
+        function updateAxisList(gp, lt, rt) { const a = gp.axes; document.getElementById('axis-list').innerHTML = `<div class="axis-row"><span>Axis 0 (L X)</span><span>${(a[0] || 0).toFixed(3)}</span></div><div class="axis-row"><span>Axis 1 (L Y)</span><span>${(a[1] || 0).toFixed(3)}</span></div><div class="axis-row r"><span>Axis 2 (R X)</span><span>${(a[2] || 0).toFixed(3)}</span></div><div class="axis-row r"><span>Axis 3 (R Y)</span><span>${(a[3] || 0).toFixed(3)}</span></div><div class="axis-row"><span>LT</span><span>${lt.toFixed(2)}</span></div><div class="axis-row r"><span>RT</span><span>${rt.toFixed(2)}</span></div><div class="axis-row"><span>FPS</span><span>${fps}</span></div>` }
+        function update() { frames++; const now = performance.now(); if (now - lastTime > 1000) { fps = frames; frames = 0; lastTime = now } const gp = getPad(); if (gp) { const ax = gp.axes, lx = ax[0] || 0, ly = ax[1] || 0, rx = ax[2] || 0, ry = ax[3] || 0; updateStick(lx, ly, { dot: 'ls-dot', x: 'ls-x', y: 'ls-y', rad: 'ls-rad', trail: 'ls-trail', wrap: 'ls-wrap' }, lsTrail, 'rgba(0,240,168,1)'); updateStick(rx, ry, { dot: 'rs-dot', x: 'rs-x', y: 'rs-y', rad: 'rs-rad', trail: 'rs-trail', wrap: 'rs-wrap' }, rsTrail, 'rgba(25,191,255,1)'); updateCirc('left', lx, ly); updateCirc('right', rx, ry); renderCircularity(); const lt = gp.buttons[6]?.value || 0, rt = gp.buttons[7]?.value || 0; document.getElementById('l2-fill').style.height = (lt * 100).toFixed(1) + '%'; document.getElementById('l2-val').textContent = (lt * 100).toFixed(0) + '%'; document.getElementById('r2-fill').style.height = (rt * 100).toFixed(1) + '%'; document.getElementById('r2-val').textContent = (rt * 100).toFixed(0) + '%'; gp.buttons.forEach((btn, i) => { const def = BTN_DEFS[i], chip = document.getElementById('chip-' + i); if (!def || !chip) return; const on = btn.pressed || btn.value > .5; if (on) testedSet.add(i); chip.className = 'btn-chip ' + (def.cls || '') + (on ? ' on' : testedSet.has(i) ? ' tested' : ''); if (def.svg) { const colors = { a: '#00f0a8', b: '#ff4268', x: '#19bfff', y: '#ffe35a' }; svgHighlight(def.svg, on, colors[def.cls] || '#00f0a8') } }); document.getElementById('input-count').textContent = `${testedSet.size} / ${gp.buttons.length} inputs tested`; updateAxisList(gp, lt, rt) } requestAnimationFrame(update) }
+        window.addEventListener('gamepadconnected', e => { document.getElementById('status-dot').classList.add('on'); document.getElementById('status-text').textContent = e.gamepad.id; if (!started) { started = true; requestAnimationFrame(update) } }); window.addEventListener('gamepaddisconnected', () => { document.getElementById('status-dot').classList.remove('on'); document.getElementById('status-text').textContent = 'Controller terputus'; document.getElementById('input-count').textContent = '' });
+        document.getElementById('history-btn').onclick = e => { historyOn = !historyOn; e.target.classList.toggle('active', historyOn); e.target.textContent = historyOn ? 'History ON' : 'History OFF'; if (!historyOn) { lsTrail = []; rsTrail = [] } }; document.getElementById('clear-path-btn').onclick = () => { lsTrail = []; rsTrail = [] }; document.getElementById('circ-btn').onclick = e => { circOn = !circOn; e.target.classList.toggle('active', circOn); e.target.textContent = circOn ? 'Test ON' : 'Test OFF'; renderCircularity() }; document.getElementById('circ-clear').onclick = () => { circData = { left: { bins: new Array(CIRC_BINS).fill(0), samples: 0 }, right: { bins: new Array(CIRC_BINS).fill(0), samples: 0 } }; renderCircularity() }; document.querySelectorAll('.vib').forEach(b => b.onclick = () => vibrate(+b.dataset.weak, +b.dataset.strong, 650)); document.getElementById('vib-inf').onclick = e => { if (vibTimer) { clearInterval(vibTimer); vibTimer = null; e.target.classList.remove('active'); e.target.textContent = '∞ Infinite'; vibrate(0, 0, 1); return } e.target.classList.add('active'); e.target.textContent = '∞ ON'; vibrate(.7, .7, 900); vibTimer = setInterval(() => vibrate(.7, .7, 900), 850) }; document.getElementById('vib-stop').onclick = () => { if (vibTimer) clearInterval(vibTimer); vibTimer = null; document.getElementById('vib-inf').classList.remove('active'); document.getElementById('vib-inf').textContent = '∞ Infinite'; vibrate(0, 0, 1); document.getElementById('vib-status').textContent = 'Status: stop' };
+        buildButtons(); renderCircularity(); requestAnimationFrame(update);
     </script>
 </body>
 
