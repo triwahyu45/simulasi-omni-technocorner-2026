@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32 C++ Kinematics & 3D Omni Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+            background: #222;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #left-panel {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #000;
+            z-index: 10;
+            transition: width 0.2s;
+        }
+
+        #right-panel {
+            width: 60%;
+            position: relative;
+            transition: width 0.2s;
+        }
+
+        .header {
+            background: #111;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            color: #00ffcc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .CodeMirror {
+            flex-grow: 1;
+            height: 100%;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        #canva-container {
+            width: 100%;
+            height: calc(100vh - 40px);
+            display: block;
+        }
+
+        #status-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            color: #0f0;
+            pointer-events: none;
+            border: 1px solid #0f0;
+            z-index: 20;
+            transition: opacity 0.3s;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .ui-btn {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            pointer-events: auto;
+        }
+
+        .ui-btn:hover {
+            background: #444;
+        }
+
+        #reset-view-btn {
+            background: #007acc;
+            border-color: #005999;
+        }
+
+        #reset-view-btn:hover {
+            background: #005999;
+        }
+
+        .data-display {
+            margin-top: 8px;
+            font-size: 13px;
+            border-top: 1px dashed #0f0;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="left-panel">
+        <div class="header">
+            <span>C++ Logic (ESP32)</span>
+            <span style="color: #888; font-size: 11px;">Copy-Paste Reference</span>
+        </div>
+        <textarea id="cpp-editor">
+/* * FUNGSI KINEMATIKA OMNI X-DRIVE (FIELD-CENTRIC)
+ * Gunakan fungsi ini di loop() utama ESP32 Anda.
+ */
+
+#include <Arduino.h>
+#include <math.h>
+// Asumsi menggunakan #include <PS4Controller.h>
+
+// Variabel Global Output PWM Motor (-255 hingga 255)
+// Minus berarti motor berputar terbalik (mundur)
+int pwm_fl, pwm_fr, pwm_rl, pwm_rr;
+
+void calcOmniKinematics(int stick_x, int stick_y, int stick_z, float gyro_rad) {
+    // 1. Normalisasi Input Stik PS4 (-128 s/d 127) menjadi (-1.0 s/d 1.0)
+    // Beri deadzone 10 untuk mencegah drifting analog
+    float norm_x = (abs(stick_x) > 10) ? (float)stick_x / 128.0 : 0.0;
+    float norm_y = (abs(stick_y) > 10) ? (float)stick_y / 128.0 : 0.0;
+    float norm_z = (abs(stick_z) > 10) ? (float)stick_z / 128.0 : 0.0;
+
+    // 2. Matriks Transformasi Rotasi 2D (Field-Centric via Gyro)
+    float cosT = cos(gyro_rad);
+    float sinT = sin(gyro_rad);
+
+    float localX = norm_x * cosT + norm_y * sinT;
+    float localY = -norm_x * sinT + norm_y * cosT;
+
+    // 3. Inverse Kinematics X-Drive (Sudut 45 Derajat)
+    float fl = localY + localX + norm_z;
+    float fr = localY - localX - norm_z;
+    float rl = localY - localX + norm_z;
+    float rr = localY + localX - norm_z;
+
+    // 4. Normalisasi Vektor Maksimum (Menghindari PWM > 255)
+    float max_val = fmax(fmax(abs(fl), abs(fr)), fmax(abs(rl), abs(rr)));
+    if (max_val > 1.0) {
+        fl /= max_val;
+        fr /= max_val;
+        rl /= max_val;
+        rr /= max_val;
+    }
+
+    // 5. Konversi ke sinyal PWM 8-bit (0 - 255)
+    pwm_fl = round(fl * 255.0);
+    pwm_fr = round(fr * 255.0);
+    pwm_rl = round(rl * 255.0);
+    pwm_rr = round(rr * 255.0);
+}
+
+/* * CARA PENGGUNAAN DI DALAM LOOP:
+ * * void loop() {
+ * if (PS4.isConnected()) {
+ * // Dapatkan data sensor gyro MPU6050 dalam Radian
+ * float current_gyro_rad = getGyroZ_Radian(); 
+ * * calcOmniKinematics(PS4.LStickX(), PS4.LStickY(), PS4.RStickX(), current_gyro_rad);
+ * * // Eksekusi fungsi penggerak TB6612FNG
+ * driveMotor(MOTOR_FL, pwm_fl);
+ * driveMotor(MOTOR_FR, pwm_fr);
+ * driveMotor(MOTOR_RL, pwm_rl);
+ * driveMotor(MOTOR_RR, pwm_rr);
+ * }
+ * }
+ */
+        </textarea>
+    </div>
+
+    <div id="right-panel">
+        <div class="header">
+            <span>3D Omni Visualizer (GLB + Gyro)</span>
+            <div class="btn-group">
+                <button id="toggle-editor-btn" class="ui-btn">TOGGLE EDITOR</button>
+                <button id="toggle-overlay-btn" class="ui-btn">TOGGLE INFO</button>
+                <button id="reset-view-btn" class="ui-btn">RESET VIEW</button>
+            </div>
+        </div>
+        <div id="status-overlay">
+            <b id="gp-status" style="color: #ffaa00;">KLIK LAYAR INI & TEKAN TOMBOL STIK PS4!</b>
+            <div class="data-display">
+                Vektor Input Stik (Global): <br><span id="val-input">X:0.00 | Y:0.00 | Turn:0.00</span>
+            </div>
+            <div class="data-display" style="color: #00ffff;">
+                Status Sasis Aktual: <br><span id="val-actual">Translasi X:0 | Y:0 | Gyro: 0°</span>
+            </div>
+            <div class="data-display" style="color: #ffaa00;">
+                Kinematic Slip / Stall Motor: <br><span id="val-slip" style="font-size: 1.2em;">Memuat Roda
+                    GLB...</span>
+            </div>
+        </div>
+        <div id="canva-container"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+
+    <script>
+        // 1. Inisialisasi UI Toggles & Editor
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        const overlay = document.getElementById('status-overlay');
+        let editorVisible = true;
+        let overlayVisible = true;
+
+        var editor = CodeMirror.fromTextArea(document.getElementById("cpp-editor"), {
+            lineNumbers: true, mode: "text/x-c++src", theme: "monokai", readOnly: true
+        });
+
+        // 2. Setup Three.js
+        const container = document.getElementById('canva-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x2a2a2a);
+
+        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.01, 100);
+        camera.position.set(0.3, 0.3, 0.3);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05; controls.maxPolarAngle = Math.PI / 2;
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(5, 10, 5); scene.add(directionalLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+
+        scene.add(new THREE.GridHelper(1, 20, 0x666666, 0x222222));
+
+        const robot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.015, 0.1), new THREE.MeshPhongMaterial({ color: 0x444444 }));
+        robot.position.y = 0.03;
+        scene.add(robot);
+
+        const frontMark = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.005, 3), new THREE.MeshPhongMaterial({ color: 0x00ffcc }));
+        frontMark.position.set(0, 0.008, -0.04);
+        frontMark.rotation.y = Math.PI / 2;
+        robot.add(frontMark);
+
+        // 3. Pemuatan Aset Roda GLB
+        const loader = new THREE.GLTFLoader();
+        const wheels = new Array(4);
+        let wheelsLoaded = 0;
+
+        const posOff = 0.06;
+        const yOff = -0.0035;
+        const corners = [[-posOff, yOff, -posOff], [posOff, yOff, -posOff], [-posOff, yOff, posOff], [posOff, yOff, posOff]];
+        const anglesY = [-Math.PI / 4, Math.PI / 4, Math.PI / 4, -Math.PI / 4];
+        const modelPath = 'Web Assets/Roda_Omni_53mm.glb';
+
+        corners.forEach((pos, i) => {
+            const group = new THREE.Group();
+            group.position.set(pos[0], pos[1], pos[2]);
+
+            loader.load(modelPath, function (gltf) {
+                const wMesh = gltf.scene;
+
+                const box = new THREE.Box3().setFromObject(wMesh);
+                const center = box.getCenter(new THREE.Vector3());
+                wMesh.children.forEach(child => { child.position.sub(center); });
+
+                wMesh.scale.set(1.0, 1.0, 1.0);
+                wMesh.rotation.x = -Math.PI / 2;
+                wMesh.rotation.z = Math.PI / 2;
+
+                group.add(wMesh);
+                group.rotation.y = anglesY[i];
+                robot.add(group);
+
+                wheels[i] = wMesh;
+                wheelsLoaded++;
+
+                if (wheelsLoaded === 4) {
+                    document.getElementById('val-slip').innerHTML = `Aman (0.00)`;
+                    document.getElementById('val-slip').style.color = "#00ff00";
+                }
+            }, undefined, function (error) {
+                document.getElementById('val-slip').innerHTML = `ERROR: Gagal Muat GLB`;
+                document.getElementById('val-slip').style.color = "#ff0000";
+            });
+        });
+
+        // 4. Logika Resize & UI Buttons
+        function resizeCanvas() {
+            // Memberi waktu untuk transisi CSS selesai sebelum mengkalkulasi ulang dimensi
+            setTimeout(() => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }, 210);
+        }
+
+        document.getElementById('toggle-editor-btn').addEventListener('click', () => {
+            editorVisible = !editorVisible;
+            leftPanel.style.display = editorVisible ? 'flex' : 'none';
+            rightPanel.style.width = editorVisible ? '60%' : '100%';
+            resizeCanvas();
+        });
+
+        document.getElementById('toggle-overlay-btn').addEventListener('click', () => {
+            overlayVisible = !overlayVisible;
+            overlay.style.opacity = overlayVisible ? '1' : '0';
+        });
+
+        document.getElementById('reset-view-btn').addEventListener('click', () => {
+            camera.position.set(0.3, 0.3, 0.3); controls.target.set(0, 0, 0);
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // 5. Koneksi Gamepad
+        let gamepadIndex = null;
+        window.addEventListener("gamepadconnected", (e) => {
+            gamepadIndex = e.gamepad.index;
+            document.getElementById('gp-status').innerHTML = `Terhubung: ${e.gamepad.id}`;
+            document.getElementById('gp-status').style.color = "#00ff00";
+        });
+        window.addEventListener("gamepaddisconnected", (e) => {
+            if (e.gamepad.index === gamepadIndex) {
+                gamepadIndex = null;
+                document.getElementById('gp-status').innerHTML = `KLIK LAYAR & TEKAN TOMBOL STIK PS4!`;
+                document.getElementById('gp-status').style.color = "#ffaa00";
+            }
+        });
+
+        // 6. Mesin Fisika Latar Belakang (Evaluator C++)
+        function animate() {
+            requestAnimationFrame(animate); controls.update();
+
+            if (wheelsLoaded < 4) {
+                renderer.render(scene, camera);
+                return;
+            }
+
+            if (gamepadIndex !== null) {
+                const gp = navigator.getGamepads()[gamepadIndex];
+                if (gp) {
+                    let xVal = Math.abs(gp.axes[0]) > 0.1 ? gp.axes[0] : 0;
+                    let yVal = Math.abs(gp.axes[1]) > 0.1 ? gp.axes[1] : 0;
+                    let zRot = Math.abs(gp.axes[2]) > 0.1 ? gp.axes[2] : 0;
+
+                    const y = -yVal; const x = xVal; const z = zRot;
+
+                    if (overlayVisible) {
+                        document.getElementById('val-input').innerHTML = `X:${x.toFixed(2)} | Y:${y.toFixed(2)} | Turn:${z.toFixed(2)}`;
+                    }
+
+                    const gyroRadian = robot.rotation.y;
+                    const gyroDegree = (gyroRadian * 180 / Math.PI) % 360;
+
+                    let cosT = Math.cos(gyroRadian);
+                    let sinT = Math.sin(gyroRadian);
+
+                    let localX = x * cosT + y * sinT;
+                    let localY = -x * sinT + y * cosT;
+
+                    let fl = localY + localX + z;
+                    let fr = localY - localX - z;
+                    let rl = localY - localX + z;
+                    let rr = localY + localX - z;
+
+                    let maxV = Math.max(Math.abs(fl), Math.abs(fr), Math.abs(rl), Math.abs(rr));
+                    if (maxV > 1.0) { fl /= maxV; fr /= maxV; rl /= maxV; rr /= maxV; }
+
+                    wheels[0].rotation.x -= fl * 0.075; wheels[1].rotation.x -= fr * 0.075;
+                    wheels[2].rotation.x -= rl * 0.075; wheels[3].rotation.x -= rr * 0.075;
+
+                    let localActualY = (fl + fr + rl + rr) / 4;
+                    let localActualX = (fl - fr - rl + rr) / 4;
+                    let actualZ = (fl - fr + rl - rr) / 4;
+
+                    let id_fl = localActualY + localActualX + actualZ;
+                    let id_fr = localActualY - localActualX - actualZ;
+                    let id_rl = localActualY - localActualX + actualZ;
+                    let id_rr = localActualY + localActualX - actualZ;
+                    let slip = Math.abs(fl - id_fl) + Math.abs(fr - id_fr) + Math.abs(rl - id_rl) + Math.abs(rr - id_rr);
+
+                    let globalActualX = localActualX * cosT - localActualY * sinT;
+                    let globalActualY = localActualX * sinT + localActualY * cosT;
+
+                    robot.position.x += globalActualX * 0.002;
+                    robot.position.z -= globalActualY * 0.002;
+                    robot.rotation.y -= actualZ * 0.05;
+
+                    const slipUI = document.getElementById('val-slip');
+
+                    if (slip > 0.1) {
+                        if (overlayVisible) {
+                            slipUI.innerHTML = `⚠️ STALL/SLIP (${slip.toFixed(2)})`;
+                            slipUI.style.color = "#ff3333";
+                        }
+
+                        robot.position.x += (Math.random() - 0.5) * slip * 0.002;
+                        robot.position.z += (Math.random() - 0.5) * slip * 0.002;
+
+                        try {
+                            if (gp.vibrationActuator && gp.vibrationActuator.type === "dual-rumble") {
+                                gp.vibrationActuator.playEffect("dual-rumble", {
+                                    startDelay: 0, duration: 50,
+                                    weakMagnitude: Math.min(slip / 4, 1.0), strongMagnitude: Math.min(slip / 4, 1.0)
+                                });
+                            }
+                        } catch (e) { }
+                    } else {
+                        if (overlayVisible) {
+                            slipUI.innerHTML = `Aman (0.00)`;
+                            slipUI.style.color = "#00ff00";
+                        }
+                    }
+
+                    if (overlayVisible) {
+                        document.getElementById('val-actual').innerHTML = `Gerak X:${globalActualX.toFixed(2)} | Y:${globalActualY.toFixed(2)} | Gyro: ${gyroDegree.toFixed(0)}°`;
+                    }
+                }
+            }
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+
+</html>
