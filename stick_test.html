@@ -12,16 +12,19 @@
 
 <body>
     <nav class="app-nav" aria-label="Navigasi halaman">
-        <a href="index.html">HOME</a>
-        <a href="simulator.html">SIMULATOR</a>
-        <a class="active" href="stick_test.html">STICK TEST</a>
+        <button class="app-nav-toggle" type="button" aria-expanded="false">MENU</button>
+        <div class="app-nav-links">
+            <a href="index.html">HOME</a>
+            <a href="simulator.html">SIMULATOR</a>
+            <a class="active" href="stick_test.html">STICK TEST</a>
+        </div>
     </nav>
 
     <h1>Xbox Gamepad Diagnostic</h1>
 
     <div id="status-bar">
         <div id="status-dot"></div>
-        <span id="status-text">Menunggu controller â€” colok USB / Bluetooth, lalu tekan tombol apa pun</span>
+        <span id="status-text">Menunggu controller - colok USB / Bluetooth, lalu tekan tombol apa pun</span>
         <span id="input-count">0 / 0 inputs tested</span>
     </div>
 
@@ -82,7 +85,7 @@
                         <canvas class="trail" id="ls-trail" width="84" height="84"></canvas>
                         <div class="stick-dot" id="ls-dot"></div>
                         <div class="avg-error" id="ls-avg">
-                            <div><small>AVG ERROR</small><span>â€”</span></div>
+                            <div><small>AVG ERROR</small><span>Ready</span></div>
                         </div>
                     </div>
                     <div class="stick-info">
@@ -101,7 +104,7 @@
                         <canvas class="trail" id="rs-trail" width="84" height="84"></canvas>
                         <div class="stick-dot r" id="rs-dot"></div>
                         <div class="avg-error" id="rs-avg">
-                            <div><small>AVG ERROR</small><span>â€”</span></div>
+                            <div><small>AVG ERROR</small><span>Ready</span></div>
                         </div>
                     </div>
                     <div class="stick-info">
@@ -131,22 +134,25 @@
             </div>
 
             <div class="tool-card">
-                <div class="tool-title">Circularity Test <button class="ui-btn" id="circ-btn"
-                        style="float:right;min-height:28px;padding:2px 12px;font-size:15px;">OFF</button></div>
+                <div class="tool-title tool-title-actions">
+                    <span>Circularity Test</span>
+                    <button class="ui-btn" id="circ-clear-btn" type="button">Clear</button>
+                    <button class="ui-btn" id="circ-btn" type="button">OFF</button>
+                </div>
                 <div class="mini-circ-wrap">
                     <div class="mini-circ">
                         <canvas id="mini-l" width="128" height="128"></canvas>
                         <div>LEFT STICK</div>
-                        <div>Avg Error: <b id="mini-l-err">â€”</b></div>
-                        <div>Coverage: <span id="mini-l-cov">â€”</span></div>
-                        <div>Samples: <span id="mini-l-samples">â€”</span></div>
+                        <div>Avg Error: <b id="mini-l-err">Ready</b></div>
+                        <div>Coverage: <span id="mini-l-cov">0.0%</span></div>
+                        <div>Samples: <span id="mini-l-samples">0</span></div>
                     </div>
                     <div class="mini-circ right">
                         <canvas id="mini-r" width="128" height="128"></canvas>
                         <div>RIGHT STICK</div>
-                        <div>Avg Error: <b id="mini-r-err">â€”</b></div>
-                        <div>Coverage: <span id="mini-r-cov">â€”</span></div>
-                        <div>Samples: <span id="mini-r-samples">â€”</span></div>
+                        <div>Avg Error: <b id="mini-r-err">Ready</b></div>
+                        <div>Coverage: <span id="mini-r-cov">0.0%</span></div>
+                        <div>Samples: <span id="mini-r-samples">0</span></div>
                     </div>
                 </div>
             </div>
@@ -157,7 +163,7 @@
                     <button class="ui-btn vib" data-weak="0.25" data-strong="0.10">Soft</button>
                     <button class="ui-btn vib" data-weak="0.45" data-strong="0.55">Hard</button>
                     <button class="ui-btn vib blue" data-weak="1" data-strong="1">Full</button>
-                    <button class="ui-btn blue" id="vib-inf" style="width:100%;">âˆž Infinite OFF</button>
+                    <button class="ui-btn blue" id="vib-inf" style="width:100%;">Infinite OFF</button>
                 </div>
                 <div class="metric" id="vib-status">* Requires gamepad vibration support</div>
             </div>
@@ -170,14 +176,14 @@
             <div class="tool-card">
                 <div class="tool-title">Input Summary</div>
                 <div class="summary-list" id="summary-list"></div>
-                <div class="poll-box"><span>Polling Rate</span><b id="poll-rate">â€” Hz</b></div>
+                <div class="poll-box"><span>Polling Rate</span><b id="poll-rate">0 Hz</b></div>
             </div>
         </section>
 
         <div class="footer-bar">
-            <span>Update Rate: <b id="footer-fps">â€” FPS</b></span>
-            <span>Timestamp: <b id="footer-time">â€”</b></span>
-            <span>Browser: <b id="footer-browser">â€”</b></span>
+            <span>Update Rate: <b id="footer-fps">0 FPS</b></span>
+            <span>Timestamp: <b id="footer-time">Ready</b></span>
+            <span>Browser: <b id="footer-browser">Ready</b></span>
         </div>
     </main>
 
@@ -191,15 +197,15 @@
             { n: 'RB', svg: 'rb-shape' },
             { n: 'LT', svg: 'lt-shape' },
             { n: 'RT', svg: 'rt-shape' },
-            { n: 'â–£ View', svg: 'view-btn' },
-            { n: 'â˜° Menu', svg: 'menu-btn' },
-            { n: 'â“ LS' },
-            { n: 'â“‡ RS' },
-            { n: 'â†‘ D-Up', svg: 'dpad-up' },
-            { n: 'â†“ D-Down', svg: 'dpad-dn' },
-            { n: 'â† D-Left', svg: 'dpad-lt' },
-            { n: 'â†’ D-Right', svg: 'dpad-rt' },
-            { n: 'â—– Xbox', svg: 'xbox-btn', wide: true }
+            { n: 'View', svg: 'view-btn' },
+            { n: 'Menu', svg: 'menu-btn' },
+            { n: 'LS' },
+            { n: 'RS' },
+            { n: 'D-Up', svg: 'dpad-up' },
+            { n: 'D-Down', svg: 'dpad-dn' },
+            { n: 'D-Left', svg: 'dpad-lt' },
+            { n: 'D-Right', svg: 'dpad-rt' },
+            { n: 'Xbox', svg: 'xbox-btn', wide: true }
         ];
 
         const PAD_LAYOUT = {
@@ -859,19 +865,19 @@
 
         function renderCircularity() {
             const left = calcCirc(circData.left), right = calcCirc(circData.right);
-            document.querySelector('#ls-avg span').textContent = left.samples ? left.err.toFixed(1) + '%' : 'â€”';
-            document.querySelector('#rs-avg span').textContent = right.samples ? right.err.toFixed(1) + '%' : 'â€”';
+            document.querySelector('#ls-avg span').textContent = left.samples ? left.err.toFixed(1) + '%' : 'Ready';
+            document.querySelector('#rs-avg span').textContent = right.samples ? right.err.toFixed(1) + '%' : 'Ready';
             document.getElementById('ls-avg').classList.toggle('on', circOn); document.getElementById('rs-avg').classList.toggle('on', circOn);
             document.getElementById('ls-circ').style.display = circOn ? 'block' : 'none'; document.getElementById('rs-circ').style.display = circOn ? 'block' : 'none';
 
             drawCircCanvas('ls-circ', circData.left, 'rgba(0,240,168,1)', STICK_SIZE); drawCircCanvas('rs-circ', circData.right, 'rgba(25,191,255,1)', STICK_SIZE);
             drawCircCanvas('mini-l', circData.left, 'rgba(0,240,168,1)', 128); drawCircCanvas('mini-r', circData.right, 'rgba(25,191,255,1)', 128);
 
-            document.getElementById('mini-l-err').textContent = left.samples ? left.err.toFixed(1) + '%' : 'â€”';
-            document.getElementById('mini-r-err').textContent = right.samples ? right.err.toFixed(1) + '%' : 'â€”';
-            document.getElementById('mini-l-cov').textContent = left.samples ? left.cov.toFixed(1) + '%' : 'â€”';
-            document.getElementById('mini-r-cov').textContent = right.samples ? right.cov.toFixed(1) + '%' : 'â€”';
-            document.getElementById('mini-l-samples').textContent = left.samples || 'â€”'; document.getElementById('mini-r-samples').textContent = right.samples || 'â€”';
+            document.getElementById('mini-l-err').textContent = left.samples ? left.err.toFixed(1) + '%' : 'Ready';
+            document.getElementById('mini-r-err').textContent = right.samples ? right.err.toFixed(1) + '%' : 'Ready';
+            document.getElementById('mini-l-cov').textContent = left.samples ? left.cov.toFixed(1) + '%' : '0.0%';
+            document.getElementById('mini-r-cov').textContent = right.samples ? right.cov.toFixed(1) + '%' : '0.0%';
+            document.getElementById('mini-l-samples').textContent = left.samples || '0'; document.getElementById('mini-r-samples').textContent = right.samples || '0';
         }
 
         function updateCirc(name, ax, ay) {
@@ -955,11 +961,15 @@
         document.getElementById('history-btn').onclick = e => { historyOn = !historyOn; e.target.classList.toggle('active', historyOn); e.target.textContent = historyOn ? 'History ON' : 'History OFF'; if (!historyOn) { lsTrail = []; rsTrail = []; } };
         document.getElementById('clear-path-btn').onclick = () => { lsTrail = []; rsTrail = []; };
         document.getElementById('circ-btn').onclick = e => { circOn = !circOn; e.target.classList.toggle('active', circOn); e.target.textContent = circOn ? 'ON' : 'OFF'; renderCircularity(); };
+        document.getElementById('circ-clear-btn').onclick = () => {
+            circData = { left: { bins: new Array(CIRC_BINS).fill(0), samples: 0 }, right: { bins: new Array(CIRC_BINS).fill(0), samples: 0 } };
+            renderCircularity();
+        };
 
         function stopInfiniteVibration(silent = false) {
             if (vibTimer) clearInterval(vibTimer); vibTimer = null;
             const inf = document.getElementById('vib-inf');
-            if (inf) { inf.classList.remove('active'); inf.textContent = 'âˆž Infinite OFF'; }
+            if (inf) { inf.classList.remove('active'); inf.textContent = 'Infinite OFF'; }
             vibrate(0, 0, 1);
             if (!silent) document.getElementById('vib-status').textContent = 'Status: infinite vibration OFF';
         }
@@ -967,11 +977,12 @@
         document.querySelectorAll('.vib').forEach(btn => { btn.onclick = () => { stopInfiniteVibration(true); vibrate(+btn.dataset.weak, +btn.dataset.strong, 650); }; });
         document.getElementById('vib-inf').onclick = e => {
             if (vibTimer) { stopInfiniteVibration(false); return; }
-            e.target.classList.add('active'); e.target.textContent = 'âˆž Infinite ON'; vibrate(.7, .7, 900); vibTimer = setInterval(() => vibrate(.7, .7, 900), 850);
+            e.target.classList.add('active'); e.target.textContent = 'Infinite ON'; vibrate(.7, .7, 900); vibTimer = setInterval(() => vibrate(.7, .7, 900), 850);
         };
 
         renderControllerSvg(); buildButtons(); applyEasyLayoutSettings(); renderCircularity(); updateSummary(null); updateFooter(); syncControllerOverlays(); requestAnimationFrame(update);
     </script>
+    <script src="js/shared-nav.js"></script>
 </body>
 
 </html>

@@ -19,22 +19,62 @@
     top: 10px;
     right: max(10px, env(safe-area-inset-right));
     z-index: 2000;
-    display: flex;
-    gap: 6px;
-    padding: 5px;
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+}
+
+.app-nav-toggle {
+    min-width: 48px;
+    height: 38px;
     border: 1px solid var(--tc-line);
     border-radius: 999px;
-    background: rgba(5, 10, 17, .76);
+    background: rgba(5, 10, 17, .78);
+    color: var(--tc-text);
+    cursor: pointer;
     box-shadow: 0 14px 40px rgba(0, 0, 0, .34);
     backdrop-filter: blur(12px);
+    font: 900 11px "Segoe UI", Arial, sans-serif;
+    letter-spacing: .12em;
+    transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.app-nav-toggle:hover,
+.app-nav.open .app-nav-toggle {
+    transform: translateY(-1px);
+    border-color: var(--tc-line-active);
+    background: rgba(10, 22, 34, .9);
+}
+
+.app-nav-links {
+    width: 150px;
+    display: grid;
+    gap: 6px;
+    padding: 7px;
+    border: 1px solid var(--tc-line);
+    border-radius: 18px;
+    background: rgba(5, 10, 17, .84);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .36);
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px) scale(.96);
+    transform-origin: top right;
+    transition: opacity .16s ease, transform .16s ease;
+}
+
+.app-nav.open .app-nav-links {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
 }
 
 .app-nav a {
-    min-height: 28px;
-    padding: 0 11px;
+    min-height: 34px;
+    padding: 0 12px;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     border: 1px solid transparent;
     border-radius: 999px;
     color: var(--tc-muted);
@@ -52,16 +92,31 @@
     background: rgba(51, 246, 184, .10);
 }
 
+html.page-ready body {
+    animation: tcPageIn .22s ease both;
+}
+
+html.page-leave body {
+    opacity: 0;
+    transform: translateY(8px) scale(.992);
+    transition: opacity .15s ease, transform .15s ease;
+}
+
+@keyframes tcPageIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.992);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 @media (max-width: 720px) {
     .app-nav {
         top: 8px;
         right: 8px;
-        left: 8px;
-        justify-content: center;
-        overflow-x: auto;
-    }
-
-    .app-nav a {
-        flex: 0 0 auto;
     }
 }

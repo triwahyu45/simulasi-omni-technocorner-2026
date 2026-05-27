@@ -13,46 +13,36 @@
 
 <body>
     <nav class="app-nav" aria-label="Navigasi halaman">
-        <a href="index.html">Home</a>
-        <a class="active" href="simulator.html">Simulator</a>
-        <a href="stick_test.html">Stick Test</a>
+        <button class="app-nav-toggle" type="button" aria-expanded="false">MENU</button>
+        <div class="app-nav-links">
+            <a href="index.html">Home</a>
+            <a class="active" href="simulator.html">Simulator</a>
+            <a href="stick_test.html">Stick Test</a>
+        </div>
     </nav>
 
     <div id="left-panel" class="floating-panel panel-hidden">
         <div class="header">
-            <span>ESP32 Code Generator</span>
-            <span style="color: #888; font-size: 11px;">OTA-ready monitor</span>
+            <span>Robot Program Editor</span>
+            <span style="color: #888; font-size: 11px;">mDNS / OTA-ready flow</span>
         </div>
         <div id="resizer" class="panel-resizer" title="Resize editor"></div>
         <div class="generator-panel">
-            <div class="generator-grid">
-                <label class="generator-field wide">SSID
-                    <input id="gen-ssid" value="NAMA_HOTSPOT_LAPTOP" autocomplete="off">
-                </label>
-                <label class="generator-field wide">Password
-                    <input id="gen-password" value="PASSWORD_HOTSPOT" autocomplete="off">
-                </label>
-                <label class="generator-field">Kp
-                    <input id="gen-kp" type="number" step="0.01" value="1.65">
-                </label>
-                <label class="generator-field">Ki
-                    <input id="gen-ki" type="number" step="0.001" value="0.00">
-                </label>
-                <label class="generator-field">Kd
-                    <input id="gen-kd" type="number" step="0.01" value="0.32">
-                </label>
-                <label class="generator-field">Sketch
-                    <input id="gen-filename" value="transporter_tc2026_monitor" autocomplete="off">
-                </label>
-                <label class="generator-field wide">OTA ESP32 IP / Hostname
-                    <input id="gen-ota-host" value="http://192.168.137.45" autocomplete="off">
+            <div class="editor-flow">
+                <div>
+                    <strong>Firmware flow</strong>
+                    <span>Browser tidak compile Arduino langsung. Flash awal butuh firmware .bin; update berikutnya lewat OTA .bin setelah robot punya WiFi + mDNS.</span>
+                </div>
+                <label class="generator-field">mDNS host
+                    <input id="gen-ota-host" value="transporter-tc2026.local" autocomplete="off">
                 </label>
             </div>
             <div class="generator-actions">
                 <button id="copy-code-btn" class="ui-btn" type="button">COPY CODE</button>
-                <button id="ota-ready-btn" class="ui-btn" type="button">OTA READY</button>
+                <button id="serial-prep-btn" class="ui-btn" type="button">WEB SERIAL PREP</button>
+                <button id="ota-ready-btn" class="ui-btn" type="button">OTA .BIN READY</button>
             </div>
-            <div id="generator-status" class="generator-status">Preview ready.</div>
+            <div id="generator-status" class="generator-status">Editor ready. Build firmware .bin dari Arduino CLI / PlatformIO sebelum flash.</div>
         </div>
         <textarea id="cpp-editor">
 /*
@@ -218,8 +208,8 @@ void loop() {
                 <button id="lock-view-btn" class="ui-btn">LOCK VIEW OFF</button>
                 <button id="robot-mouse-btn" class="ui-btn">ROBOT MOUSE OFF</button>
                 <button id="gyro-pid-btn" class="ui-btn active-toggle">GYRO PID ON</button>
-                <input id="esp-ip-input" class="esp-url-input" value="http://192.168.137.XX"
-                    title="Isi IP ESP32 dari Serial Monitor, contoh: http://192.168.137.45">
+                <input id="esp-ip-input" class="esp-url-input" value="http://transporter-tc2026.local"
+                    title="Gunakan mDNS jika firmware robot sudah mendukungnya, contoh: http://transporter-tc2026.local">
                 <button id="connect-esp-btn" class="ui-btn">CONNECT WIFI</button>
                 <button id="reset-view-btn" class="ui-btn">RESET VIEW</button>
                 <button id="reset-robot-btn" class="ui-btn">RESET ROBOT</button>
@@ -257,10 +247,10 @@ void loop() {
             <div class="monitor-card">
                 <div class="card-title">Input Command</div>
                 <div id="val-input" class="command-value">X:0.00 | Y:0.00 | Turn:0.00</div>
-                <div id="val-actual" class="sub-value">Gerak X:0.00 | Y:0.00 | Gyro:0Â°</div>
+                <div id="val-actual" class="sub-value">Gerak X:0.00 | Y:0.00 | Gyro:0deg</div>
                 <div class="pid-strip">
-                    <span>Yaw</span><b id="pid-current">0Â°</b>
-                    <span>Target</span><b id="pid-target">0Â°</b>
+                    <span>Yaw</span><b id="pid-current">0deg</b>
+                    <span>Target</span><b id="pid-target">0deg</b>
                     <span>PID</span><b id="pid-out">0.00</b>
                     <span>Mouse</span><b id="mouse-state">OFF</b>
                 </div>
@@ -347,6 +337,7 @@ void loop() {
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+    <script src="js/track-data.js"></script>
 
     <script>
         // Array global untuk dideteksi oleh Raycaster gravitasi (Y-Axis)
@@ -360,13 +351,13 @@ void loop() {
         let overlayVisible = false;
 
         var editor = CodeMirror.fromTextArea(document.getElementById("cpp-editor"), {
-            lineNumbers: true, mode: "text/x-c++src", theme: "monokai", readOnly: true
+            lineNumbers: true, mode: "text/x-c++src", theme: "monokai", readOnly: false
         });
 
         const PANEL_LAYOUT_KEY = 'transporter_tc2026_panel_layout_v1';
         const panelState = {
-            editor: { visible: false, x: 16, y: 58, w: 520, h: 720 },
-            info: { visible: false, x: 24, y: 68, w: 510, h: 690 }
+            editor: { visible: false, x: 16, y: 18, w: 520, h: 720 },
+            info: { visible: false, x: 24, y: 18, w: 510, h: 690 }
         };
 
         function clampPanelState(state) {
@@ -538,15 +529,15 @@ void loop() {
                 color: 0xffffff, map: trackTexture, shininess: 0
             });
             const wallMat = new THREE.MeshPhongMaterial({
-                color: 0x1a1a1a, emissive: 0x000000, shininess: 20, transparent: true, opacity: 0.02
+                color: 0x171a1f, emissive: 0x05080c, shininess: 35
             });
             const borderMat = new THREE.MeshPhongMaterial({
-                color: 0x000000, emissive: 0x000000, shininess: 30, transparent: true, opacity: 0.08
+                color: 0x05070a, emissive: 0x000000, shininess: 30
             });
             const startMat = new THREE.MeshBasicMaterial({ color: 0x1efc89, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
             const finishMat = new THREE.MeshBasicMaterial({ color: 0x1fb8ff, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
-            const rampLightMat = new THREE.MeshPhongMaterial({ color: 0x999999, shininess: 15, side: THREE.DoubleSide, transparent: true, opacity: 0.12 });
-            const topFloorMat = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 10, transparent: true, opacity: 0.14 });
+            const rampLightMat = new THREE.MeshPhongMaterial({ color: 0xb9bec3, shininess: 18, side: THREE.DoubleSide, transparent: true, opacity: 0.72 });
+            const topFloorMat = new THREE.MeshPhongMaterial({ color: 0x55585f, shininess: 12, transparent: true, opacity: 0.72 });
 
             const colors = {
                 orange: { hex: 0xffaa19 }, blue: { hex: 0x2426d9 }, pink: { hex: 0xe767e6 },
@@ -680,7 +671,7 @@ void loop() {
             addRampWedgeCm(150, 206, 35, 12, 0.05, rampLightMat, 'lower-light-ramp', 'high_z1');
 
             // Tembok Maze Lapangan
-            const wallLines = [
+            const wallLines = window.TC2026_TRACK?.wallSegmentsCm || [
                 // Kiri Atas
                 [20, 25, 85, 25], [40, 25, 40, 90], [0, 90, 40, 90], [85, 25, 85, 50],
                 [85, 50, 132.5, 50], [60, 95, 90, 95], [60, 95, 60, 140], [60, 140, 110, 140],
@@ -864,7 +855,7 @@ void loop() {
                 if (Number.isFinite(g)) {
                     robot.rotation.y = g;
                     const deg = (g * 180 / Math.PI) % 360;
-                    setText('val-actual', `Gerak X:0.00 | Y:0.00 | Gyro:${deg.toFixed(0)}Â° | Lift:${(robot.position.y * 1000).toFixed(0)}mm`);
+                    setText('val-actual', `Gerak X:0.00 | Y:0.00 | Gyro:${deg.toFixed(0)}deg | Lift:${(robot.position.y * 1000).toFixed(0)}mm`);
                 }
             }
             if (data.pose) {
@@ -875,7 +866,7 @@ void loop() {
             if (data.slip != null) {
                 const slipEl = document.getElementById('val-slip'); const slip = Number(data.slip);
                 if (slipEl && Number.isFinite(slip)) {
-                    slipEl.textContent = slip > 0.1 ? `âš  STALL ${slip.toFixed(2)}` : 'Aman (0.00)';
+                    slipEl.textContent = slip > 0.1 ? `STALL ${slip.toFixed(2)}` : 'Aman (0.00)';
                     slipEl.style.color = slip > 0.1 ? '#ff5a72' : '#32ffb1';
                 }
             }
@@ -1054,7 +1045,7 @@ void loop() {
         }
 
         function updatePidMonitor() {
-            setText('pid-current', `${radToDeg(robot.rotation.y).toFixed(0)}Â°`); setText('pid-target', `${radToDeg(gyroPid.targetYaw).toFixed(0)}Â°`); setText('pid-out', gyroPid.output.toFixed(2));
+            setText('pid-current', `${radToDeg(robot.rotation.y).toFixed(0)}deg`); setText('pid-target', `${radToDeg(gyroPid.targetYaw).toFixed(0)}deg`); setText('pid-out', gyroPid.output.toFixed(2));
         }
 
         function syncPidInputsFromState() {
@@ -1080,7 +1071,7 @@ void loop() {
         document.getElementById('reset-robot-btn').addEventListener('click', () => {
             robot.position.set(0, 0.03, 1.375); robot.rotation.set(0, 0, 0);
             gyroPid.targetYaw = robot.rotation.y; gyroPid.integral = 0; gyroPid.lastError = 0; gyroPid.hasLastError = false; gyroPid.output = 0;
-            setText('val-actual', 'Gerak X:0.00 | Y:0.00 | Gyro:0Â° | Lift:30mm'); updatePidMonitor();
+            setText('val-actual', 'Gerak X:0.00 | Y:0.00 | Gyro:0deg | Lift:30mm'); updatePidMonitor();
         });
 
         (function enableRobotMouseManipulation() {
@@ -1306,7 +1297,7 @@ void loop() {
                     const slipUI = document.getElementById('val-slip');
 
                     if (slip > 0.1) {
-                        if (overlayVisible) { slipUI.innerHTML = `âš ï¸ STALL/SLIP (${slip.toFixed(2)})`; slipUI.style.color = "#ff3333"; }
+                        if (overlayVisible) { slipUI.innerHTML = `STALL/SLIP (${slip.toFixed(2)})`; slipUI.style.color = "#ff3333"; }
                         robot.position.x += (Math.random() - 0.5) * slip * 0.002;
                         robot.position.z += (Math.random() - 0.5) * slip * 0.002;
                         try {
@@ -1319,7 +1310,7 @@ void loop() {
                     }
 
                     if (overlayVisible) {
-                        document.getElementById('val-actual').innerHTML = `Gerak X:${globalActualX.toFixed(2)} | Y:${globalActualY.toFixed(2)} | Gyro:${gyroDegree.toFixed(0)}Â° | Pitch:${(robot.rotation.x * 180 / Math.PI).toFixed(1)}Â° | Roll:${(robot.rotation.z * 180 / Math.PI).toFixed(1)}Â° | Lift:${(robot.position.y * 1000).toFixed(0)}mm`;
+                        document.getElementById('val-actual').innerHTML = `Gerak X:${globalActualX.toFixed(2)} | Y:${globalActualY.toFixed(2)} | Gyro:${gyroDegree.toFixed(0)}deg | Pitch:${(robot.rotation.x * 180 / Math.PI).toFixed(1)}deg | Roll:${(robot.rotation.z * 180 / Math.PI).toFixed(1)}deg | Lift:${(robot.position.y * 1000).toFixed(0)}mm`;
                         document.getElementById('enc-fl').innerText = Math.round(wheels[0].rotation.x * 100);
                         document.getElementById('enc-fr').innerText = Math.round(wheels[1].rotation.x * 100);
                         document.getElementById('enc-rl').innerText = Math.round(wheels[2].rotation.x * 100);
@@ -1339,6 +1330,7 @@ void loop() {
         try { loadState(); } catch (e) { }
         animate();
     </script>
+    <script src="js/shared-nav.js"></script>
     <script src="js/esp32-generator.js"></script>
 </body>
 

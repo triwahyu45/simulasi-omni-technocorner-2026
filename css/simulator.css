@@ -529,6 +529,31 @@ body {
     gap: 8px;
 }
 
+.editor-flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 220px);
+    gap: 10px;
+    align-items: end;
+}
+
+.editor-flow strong,
+.editor-flow span {
+    display: block;
+}
+
+.editor-flow strong {
+    color: var(--accent-2);
+    font: 900 12px "Courier New", monospace;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.editor-flow span {
+    margin-top: 4px;
+    color: #8fb2c9;
+    font: 700 11px/1.45 "Courier New", monospace;
+}
+
 .generator-field {
     display: grid;
     gap: 4px;
@@ -599,7 +624,7 @@ body {
 
 #left-panel.floating-panel {
     left: 16px;
-    top: 58px;
+    top: 18px;
     width: min(520px, calc(100vw - 32px));
     height: min(760px, calc(100vh - 76px));
     min-width: 290px;
@@ -611,7 +636,7 @@ body {
 
 #status-overlay.floating-panel {
     left: 24px;
-    top: 68px;
+    top: 18px;
     width: min(510px, calc(100vw - 32px));
     height: min(690px, calc(100vh - 86px));
     max-height: calc(100vh - 24px);
@@ -685,6 +710,10 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .editor-flow {
+        grid-template-columns: 1fr;
+    }
+
     #canva-container {
         height: calc(100vh - 50px);
     }
@@ -705,7 +734,7 @@ body {
     #left-panel.floating-panel,
     #status-overlay.floating-panel {
         left: 10px;
-        top: 62px;
+        top: 56px;
         width: calc(100vw - 20px);
         max-width: calc(100vw - 20px);
         height: min(72vh, 680px);
