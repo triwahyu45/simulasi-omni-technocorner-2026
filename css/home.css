@@ -9,17 +9,19 @@ body {
     display: grid;
     place-items: center;
     overflow: hidden;
+    overflow-x: hidden;
     background:
         radial-gradient(circle at 50% 12%, rgba(24, 200, 255, .15), transparent 30%),
         radial-gradient(circle at 50% 100%, rgba(51, 246, 184, .10), transparent 34%),
         linear-gradient(135deg, #050810, #09131f 54%, #061014);
     color: var(--tc-text);
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-family: "Segoe UI Variable", "Segoe UI", Inter, Arial, sans-serif;
 }
 
 .home-shell {
-    width: min(520px, calc(100% - 36px));
+    width: min(520px, 100%);
     min-height: 520px;
+    padding-inline: 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -32,7 +34,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
 .profile img {
@@ -46,15 +48,17 @@ body {
 
 .profile h1 {
     margin: 0;
-    font-size: clamp(30px, 8vw, 48px);
-    line-height: 1;
-    letter-spacing: 0;
+    font-size: clamp(34px, 9vw, 58px);
+    line-height: .96;
+    font-weight: 650;
+    letter-spacing: .01em;
 }
 
 .github-link {
     color: var(--tc-muted);
     text-decoration: none;
-    font: 700 14px "Consolas", monospace;
+    font: 700 14px "Segoe UI", Arial, sans-serif;
+    letter-spacing: .02em;
 }
 
 .github-link:hover {
@@ -63,10 +67,12 @@ body {
 
 .caption {
     max-width: 420px;
-    margin: -8px 0 0;
+    width: 100%;
+    margin: -6px 0 0;
     color: var(--tc-muted);
-    font-size: 15px;
-    line-height: 1.65;
+    font-size: clamp(14px, 3.6vw, 16px);
+    line-height: 1.7;
+    overflow-wrap: break-word;
 }
 
 .menu {
@@ -77,6 +83,7 @@ body {
 }
 
 .menu a {
+    min-width: 0;
     min-height: 96px;
     padding: 18px;
     display: flex;
@@ -113,6 +120,8 @@ body {
     font: 700 11px "Consolas", monospace;
     letter-spacing: .14em;
     text-transform: uppercase;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 @media (max-width: 560px) {
@@ -123,6 +132,8 @@ body {
     .home-shell {
         min-height: 100vh;
         padding: 58px 0 28px;
+        width: 100%;
+        padding-inline: 18px;
     }
 
     .menu {

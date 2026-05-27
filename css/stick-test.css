@@ -668,7 +668,10 @@
 
         @media(max-width:1250px) {
             body {
-                overflow: auto
+                height: auto;
+                max-height: none;
+                overflow: auto;
+                padding-top: 8px;
             }
 
             .app-nav {
@@ -678,9 +681,13 @@
             }
 
             .dashboard {
+                width: min(100%, 900px);
+                height: auto;
+                max-height: none;
                 grid-template-columns: 1fr;
-                grid-template-rows: 470px auto auto 34px;
+                grid-template-rows: minmax(360px, 54vh) auto auto auto;
                 grid-template-areas: "pad" "side" "tools" "footer";
+                margin-bottom: 18px;
             }
 
             .side-panel {
@@ -691,6 +698,44 @@
 
             .tools-grid {
                 grid-template-columns: repeat(2, minmax(240px, 1fr))
+            }
+
+            .tool-card {
+                min-height: 0;
+                height: auto;
+            }
+
+            .footer-bar {
+                min-height: 38px;
+                grid-template-columns: 1fr;
+                gap: 4px;
+                padding: 8px 14px;
+                text-align: left;
+            }
+
+            .footer-bar span:nth-child(2),
+            .footer-bar span:nth-child(3) {
+                text-align: left;
+            }
+        }
+
+        @media(max-width:720px) {
+            h1 {
+                margin-top: 54px;
+                letter-spacing: .16em;
+            }
+
+            #status-bar {
+                height: auto;
+                min-height: 44px;
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 6px;
+                padding: 10px 14px;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
             }
         }
 

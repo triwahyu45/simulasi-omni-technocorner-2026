@@ -7,7 +7,7 @@
             --glass: rgba(4, 8, 15, 0.6);
         }
 
-        body {
+body {
             margin: 0;
             padding: 0;
             display: block;
@@ -16,6 +16,10 @@
             background: var(--bg);
             color: #ffffff;
             overflow: hidden;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
         }
 
         #left-panel {
@@ -34,6 +38,7 @@
             background: rgba(4, 9, 17, 0.90);
             backdrop-filter: blur(8px);
             box-shadow: 18px 0 42px rgba(0, 0, 0, 0.45);
+            --panel-font-scale: 1;
         }
 
         #resizer {
@@ -151,6 +156,7 @@
             z-index: 20;
             transition: opacity 0.3s;
             box-shadow: 0 8px 30px rgba(3, 8, 20, 0.6);
+            --panel-font-scale: 1;
         }
 
         #status-overlay .data-display {
@@ -571,9 +577,138 @@
     min-height: 180px;
 }
 
+#right-panel>.header {
+    min-height: 50px;
+    padding-right: 300px;
+}
+
+/* Floating simulator windows */
+.floating-panel {
+    position: absolute !important;
+    border: 1px solid rgba(0, 209, 255, .24);
+    border-radius: 14px;
+    overflow: hidden;
+    pointer-events: auto;
+    resize: none;
+    transition: opacity .16s ease, transform .08s ease;
+}
+
+.floating-panel.panel-hidden {
+    display: none !important;
+}
+
+#left-panel.floating-panel {
+    left: 16px;
+    top: 58px;
+    width: min(520px, calc(100vw - 32px));
+    height: min(760px, calc(100vh - 76px));
+    min-width: 290px;
+    min-height: 360px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    border-right: 1px solid rgba(0, 209, 255, .24);
+}
+
+#status-overlay.floating-panel {
+    left: 24px;
+    top: 68px;
+    width: min(510px, calc(100vw - 32px));
+    height: min(690px, calc(100vh - 86px));
+    max-height: calc(100vh - 24px);
+    min-width: 300px;
+    min-height: 260px;
+    overflow: auto;
+    pointer-events: auto;
+}
+
+.floating-panel .header,
+#status-overlay .monitor-top {
+    cursor: grab;
+    user-select: none;
+}
+
+.floating-panel.dragging .header,
+#status-overlay.dragging .monitor-top {
+    cursor: grabbing;
+}
+
+.panel-resizer {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    height: 18px;
+    cursor: nwse-resize;
+    z-index: 100;
+    background: linear-gradient(135deg, transparent 45%, rgba(50, 255, 177, .72) 46%, rgba(50, 255, 177, .72) 56%, transparent 57%);
+}
+
+#resizer {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, transparent 45%, rgba(50, 255, 177, .72) 46%, rgba(50, 255, 177, .72) 56%, transparent 57%);
+}
+
+#left-panel .header,
+#status-overlay .monitor-kicker,
+.card-title {
+    font-size: calc(12px * var(--panel-font-scale, 1));
+}
+
+#left-panel .CodeMirror {
+    font-size: calc(13px * var(--panel-font-scale, 1));
+}
+
+#status-overlay {
+    font-size: calc(12px * var(--panel-font-scale, 1));
+}
+
+.command-value {
+    font-size: calc(20px * var(--panel-font-scale, 1));
+}
+
+.sub-value,
+.quad-grid,
+.status-line strong {
+    font-size: calc(13px * var(--panel-font-scale, 1));
+}
+
+.generator-panel {
+    flex: 0 0 auto;
+}
+
 @media (max-width: 900px) {
     .generator-grid {
         grid-template-columns: 1fr;
+    }
+
+    #canva-container {
+        height: calc(100vh - 50px);
+    }
+
+    .btn-group {
+        justify-content: flex-start;
+        padding-right: 0;
+        margin-top: 46px;
+    }
+
+    #right-panel>.header {
+        min-height: 96px;
+        padding-right: 10px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #left-panel.floating-panel,
+    #status-overlay.floating-panel {
+        left: 10px;
+        top: 62px;
+        width: calc(100vw - 20px);
+        max-width: calc(100vw - 20px);
+        height: min(72vh, 680px);
     }
 }
 

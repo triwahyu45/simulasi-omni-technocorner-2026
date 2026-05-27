@@ -5,7 +5,8 @@
         kp: '1.65',
         ki: '0.00',
         kd: '0.32',
-        filename: 'transporter_tc2026_monitor'
+        filename: 'transporter_tc2026_monitor',
+        otaHost: 'http://192.168.137.45'
     };
 
     const ids = {
@@ -14,7 +15,8 @@
         kp: 'gen-kp',
         ki: 'gen-ki',
         kd: 'gen-kd',
-        filename: 'gen-filename'
+        filename: 'gen-filename',
+        otaHost: 'gen-ota-host'
     };
 
     function getValue(key) {
@@ -49,6 +51,7 @@
 
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ArduinoOTA.h>
 
 const char* WIFI_SSID = "${ssid}";
 const char* WIFI_PASS = "${password}";
@@ -143,6 +146,18 @@ void setup() {
   Serial.print("ESP32 IP: ");
   Serial.println(WiFi.localIP());
 
+  ArduinoOTA.setHostname("transporter-tc2026");
+  ArduinoOTA.onStart([]() {
+    Serial.println("OTA update started");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\\nOTA update finished");
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("OTA error[%u]\\n", error);
+  });
+  ArduinoOTA.begin();
+
   server.on("/data", HTTP_GET, handleData);
   server.on("/data", HTTP_OPTIONS, handleOptions);
   server.onNotFound([]() {
@@ -155,6 +170,7 @@ void setup() {
 }
 
 void loop() {
+  ArduinoOTA.handle();
   server.handleClient();
 
   // TODO: replace placeholder values with real sensors/actuators.
@@ -208,18 +224,9 @@ void loop() {
         }
     }
 
-    function downloadCode() {
-        const name = cleanFilename(getValue('filename'));
-        const blob = new Blob([getEditorCode()], { type: 'text/x-arduino;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${name}.ino`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        setStatus(`Downloaded ${name}.ino`);
+    function markOtaReady() {
+        const host = getValue('otaHost');
+        setStatus(`OTA-ready sketch prepared for ${host}. Compile/upload service will be added later.`);
     }
 
     function refreshCode() {
@@ -236,9 +243,9 @@ void loop() {
         });
 
         const copyBtn = document.getElementById('copy-code-btn');
-        const downloadBtn = document.getElementById('download-code-btn');
+        const otaBtn = document.getElementById('ota-ready-btn');
         if (copyBtn) copyBtn.addEventListener('click', copyCode);
-        if (downloadBtn) downloadBtn.addEventListener('click', downloadCode);
+        if (otaBtn) otaBtn.addEventListener('click', markOtaReady);
         refreshCode();
     }
 

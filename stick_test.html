@@ -602,6 +602,21 @@
         }
 
         function applyBoxLayoutSettings() {
+            if (window.innerWidth <= 1250) {
+                const resetStyle = (el) => {
+                    if (!el) return;
+                    ['transform', 'width', 'height', 'maxHeight', 'gridTemplateColumns', 'gridTemplateRows', 'gap', 'alignItems', 'alignSelf', 'padding', 'overflow'].forEach(prop => {
+                        el.style[prop] = '';
+                    });
+                };
+                resetStyle(document.getElementById('status-bar'));
+                resetStyle(document.querySelector('.dashboard'));
+                resetStyle(document.querySelector('.side-panel'));
+                resetStyle(document.querySelector('.tools-grid'));
+                document.querySelectorAll('.tool-card').forEach(resetStyle);
+                return;
+            }
+
             const g = UI_BOX_LAYOUT.global;
             document.body.style.setProperty('--box-global-font-size', `${g.textFontSize}px`);
 
