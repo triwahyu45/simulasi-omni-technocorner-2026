@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xbox Gamepad Diagnostic - Window Layout Editor</title>
+    <title>Universal Gamepad Diagnostic - Manual Layout</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700;800&display=swap');
 
@@ -32,16 +32,19 @@
         html,
         body {
             width: 100%;
-            min-height: 100%
+            height: 100%;
+            min-height: 100%;
+            overflow: hidden;
         }
 
         body {
-            background:
-                radial-gradient(circle at 50% 0%, rgba(30, 45, 65, .82) 0%, rgba(9, 15, 24, .98) 44%, #050911 100%);
+            height: 100vh;
+            max-height: 100vh;
+            background: radial-gradient(circle at 50% 0%, rgba(30, 45, 65, .82) 0%, rgba(9, 15, 24, .98) 44%, #050911 100%);
             color: var(--text);
             font-family: Rajdhani, sans-serif;
-            overflow-x: hidden;
-            padding: 8px 14px 10px;
+            overflow: hidden;
+            padding: 6px 14px 6px;
         }
 
         h1 {
@@ -52,7 +55,7 @@
             color: #a9bad0;
             text-transform: uppercase;
             line-height: 1.05;
-            margin: 0 0 10px;
+            margin: 0 0 7px;
         }
 
         #status-bar {
@@ -100,10 +103,12 @@
 
         .dashboard {
             width: min(100%, 1500px);
+            height: calc(100vh - 90px);
+            max-height: calc(100vh - 90px);
             margin: auto;
             display: grid;
             grid-template-columns: minmax(880px, 1fr) 410px;
-            grid-template-rows: minmax(455px, 53vh) 250px 34px;
+            grid-template-rows: minmax(350px, 1fr) 190px 48px;
             gap: 12px;
             grid-template-areas:
                 "pad side"
@@ -114,7 +119,7 @@
         .pad-area {
             grid-area: pad;
             position: relative;
-            min-height: 440px;
+            min-height: 0;
             border-radius: 18px;
             overflow: hidden;
             background: radial-gradient(circle at 46% 48%, rgba(20, 30, 43, .42), rgba(5, 10, 17, 0) 68%);
@@ -137,22 +142,30 @@
             transform: translateX(-50%);
             transform-origin: center;
             overflow: visible;
-            /* supaya LT/LB/RT/RB yang melewati viewBox tidak kepotong */
         }
 
         .side-panel,
         .tool-card,
         .footer-bar {
             border: 1px solid var(--line);
-            border-radius: 16px;
+            border-radius: 10px;
             background: linear-gradient(180deg, var(--panel), var(--panel2));
-            box-shadow: 0 16px 42px rgba(0, 0, 0, .26);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, .32);
         }
 
         .side-panel {
             grid-area: side;
-            padding: 16px;
-            overflow: hidden
+            padding: 8px 16px 16px 16px;
+            /* bring content a bit higher */
+            overflow: visible;
+            /* allow shadow to show */
+            align-self: start;
+            position: relative;
+            /* move the panel upwards in the layout flow */
+            margin-top: -25px;
+            z-index: 60;
+            /* keep the panel above neighboring elements */
+            box-shadow: 0 22px 48px rgba(0, 0, 0, .42);
         }
 
         .section-label,
@@ -243,7 +256,12 @@
 
         .tool-card {
             padding: 16px;
-            overflow: hidden
+            overflow: hidden;
+            height: 100%;
+            /* fill the tools grid row */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
 
         .row {
@@ -328,7 +346,7 @@
             height: 124px;
             border-radius: 50%;
             display: block;
-            margin: 0 auto 5px
+            margin: 0 auto
         }
 
         .mini-circ b {
@@ -344,7 +362,13 @@
         .summary-list {
             font: 15px 'Share Tech Mono', monospace;
             color: #c7d9ee;
-            line-height: 1.72;
+            line-height: 1.5;
+        }
+
+        /* keep Input Summary visually the same vertical size as Circularity Test */
+        .summary-list {
+            min-height: 164px;
+            overflow: auto;
         }
 
         .axis-row,
@@ -385,13 +409,15 @@
 
         .footer-bar {
             grid-area: footer;
-            border-radius: 10px;
+            border-radius: 5px;
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             align-items: center;
             padding: 0 22px;
-            font: 14px 'Share Tech Mono', monospace;
+            font: 40px 'Share Tech Mono', monospace;
             color: #9cb4ce;
+            margin-top: 5px;
+            /* nudge footer slightly lower */
         }
 
         .footer-bar span:nth-child(2) {
@@ -406,7 +432,6 @@
             color: var(--green)
         }
 
-        /* overlay trigger bars exactly like reference */
         .trigger-zone {
             position: absolute;
             width: 48px;
@@ -464,7 +489,6 @@
             color: var(--blue)
         }
 
-        /* analog overlays align to the SVG circles */
         .stick-overlay {
             position: absolute;
             width: 84px;
@@ -613,74 +637,6 @@
             border-color: var(--blue)
         }
 
-
-
-        .status-control {
-            border: 1px solid var(--line2);
-            border-radius: 9px;
-            background: rgba(7, 14, 23, .88);
-            color: #b5cbe4;
-            font: 800 11px 'Share Tech Mono', monospace;
-            padding: 6px 9px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: .08s ease;
-        }
-
-        .status-control:hover,
-        .status-control.active {
-            color: var(--green);
-            border-color: rgba(0, 240, 168, .85);
-            box-shadow: 0 0 12px rgba(0, 240, 168, .1);
-        }
-
-        .status-control.ghost {
-            opacity: .78;
-        }
-
-        .window-panel {
-            position: relative;
-            min-width: 120px;
-            min-height: 70px;
-        }
-
-        .window-title-drag {
-            user-select: none;
-        }
-
-        body.layout-edit-mode .window-panel {
-            outline: 1px dashed rgba(0, 240, 168, .75);
-            outline-offset: -4px;
-            box-shadow: 0 0 0 1px rgba(0, 240, 168, .12), 0 16px 42px rgba(0, 0, 0, .28);
-        }
-
-        body.layout-edit-mode .window-title-drag {
-            cursor: move;
-            color: var(--green);
-        }
-
-        .window-resize-handle {
-            position: absolute;
-            right: 5px;
-            bottom: 5px;
-            width: 15px;
-            height: 15px;
-            border-right: 2px solid rgba(0, 240, 168, .75);
-            border-bottom: 2px solid rgba(0, 240, 168, .75);
-            cursor: nwse-resize;
-            display: none;
-            z-index: 50;
-            opacity: .85;
-        }
-
-        body.layout-edit-mode .window-resize-handle {
-            display: block;
-        }
-
-        body.layout-edit-mode .layout-hint {
-            display: inline;
-        }
-
         .layout-hint {
             display: none;
             color: var(--green);
@@ -716,18 +672,18 @@
             }
 
             h1 {
-                font-size: 16px;
+                font-size: 20px;
                 margin-bottom: 5px
             }
 
             #status-bar {
                 height: 40px;
-                margin-bottom: 8px
+                margin-bottom: 20px
             }
 
             .dashboard {
-                grid-template-rows: minmax(390px, 50vh) 220px 30px;
-                gap: 10px
+                grid-template-rows: minmax(340px, 1fr) 180px 48px;
+                gap: 9px
             }
 
             .tool-card {
@@ -754,21 +710,19 @@
             }
 
             .stick-info {
-                font-size: 14px
+                font-size: 0px
             }
         }
     </style>
 </head>
 
 <body>
-    <h1>Gamepad Diagnostic</h1>
+    <h1>Xbox Gamepad Diagnostic</h1>
 
     <div id="status-bar">
         <div id="status-dot"></div>
         <span id="status-text">Menunggu controller — colok USB / Bluetooth, lalu tekan tombol apa pun</span>
         <span id="input-count">0 / 0 inputs tested</span>
-        <button class="status-control" id="layout-edit-btn" type="button">LAYOUT EDIT OFF</button>
-        <button class="status-control ghost" id="layout-reset-btn" type="button">RESET BOX</button>
     </div>
 
     <main class="dashboard">
@@ -779,13 +733,6 @@
                     <defs>
                         <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
                             <feGaussianBlur stdDeviation="3" result="blur" />
-                            <feMerge>
-                                <feMergeNode in="blur" />
-                                <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                        </filter>
-                        <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
-                            <feGaussianBlur stdDeviation="4" result="blur" />
                             <feMerge>
                                 <feMergeNode in="blur" />
                                 <feMergeNode in="SourceGraphic" />
@@ -955,308 +902,231 @@
             { n: '◖ Xbox', svg: 'xbox-btn', wide: true }
         ];
 
-
-        // ==========================================================
-        // EASY MANUAL LAYOUT SETTINGS
-        // Ubah angka-angka di blok ini saja buat ngepasin posisi/ukuran.
-        //
-        // SVG coordinate memakai viewBox 600 x 400:
-        // x makin besar = kanan, y makin besar = bawah.
-        // dx/dy pada group = geser seluruh bagian.
-        // ==========================================================
         const PAD_LAYOUT = {
+            // GESER GLOBAL STICK / GAMBAR CONTROLLER UTAMA
+            // heightPercent = ukuran controller, topPercent = turun/naik, xShiftPercent = kiri/kanan
             controller: {
-                heightPercent: 70,   // ukuran gambar controller di area kiri
-                topPercent: 4,     // posisi atas controller
-                xShiftPercent: -10  // negatif = geser kiri, positif = kanan
+                heightPercent: 90,
+                topPercent: 2,
+                xShiftPercent: -20
             },
 
-            body: {
-                strokeWidth: 3
-            },
+            body: { strokeWidth: 3 },
 
+            // LT/LB dan RT/RB sekarang semuanya rounded rectangle.
             leftShoulder: {
                 dx: -170,
                 dy: 0,
-                ltX: 112,
-                ltY: 52,
-                ltW: 92,
-                ltH: 16,
+                ltX: 116,
+                ltY: 30,
+                ltW: 88,
+                ltH: 32,
                 lbX: 116,
-                lbY: 74,
+                lbY: 76,
                 lbW: 88,
-                lbH: 33,
+                lbH: 32,
                 radius: 10,
-                fontSize: 14
+                fontSize: 13,
+                textYOffsetLT: 21,
+                textYOffsetLB: 21
             },
 
             rightShoulder: {
                 dx: 170,
                 dy: 0,
                 rtX: 396,
-                rtY: 52,
-                rtW: 92,
-                rtH: 16,
+                rtY: 30,
+                rtW: 88,
+                rtH: 32,
                 rbX: 396,
-                rbY: 74,
+                rbY: 76,
                 rbW: 88,
-                rbH: 33,
+                rbH: 32,
                 radius: 10,
-                fontSize: 14
+                fontSize: 13,
+                textYOffsetRT: 21,
+                textYOffsetRB: 21
             },
 
-            leftStick: {
-                x: 145,
-                y: 100,
-                outerR: 50,
-                innerR: 35,
-                crossR: 35
-            },
+            leftStick: { x: 145, y: 100, outerR: 50, innerR: 35, crossR: 35 },
+            rightStick: { x: 380, y: 220, outerR: 50, innerR: 35, crossR: 35 },
+            dpad: { x: 230, y: 220, ringR: 55, reach: 50, arm: 30, corner: 6, dx: 0, dy: 0 },
+            abxy: { x: 450, y: 100, patternR: 37, buttonR: 23, textSize: 30, textYOffset: 9, dx: 0, dy: 0 },
 
-            rightStick: {
-                x: 380,
-                y: 220,
-                outerR: 50,
-                innerR: 35,
-                crossR: 35
-            },
-
-            dpad: {
-                x: 230,       // center D-pad
-                y: 220,
-                ringR: 55,
-                reach: 50,    // panjang dari tengah ke ujung atas/bawah/kiri/kanan
-                arm: 30,      // lebar lengan plus
-                corner: 6,
-                dx: 0,
-                dy: 0
-            },
-
-            abxy: {
-                x: 450,       // center pola XYAB
-                y: 100,
-                patternR: 37, // seperti circular pattern di Inventor
-                buttonR: 23,  // radius semua lingkaran X/Y/A/B
-                textSize: 30,
-                textYOffset: 9,
-                dx: 0,
-                dy: 0
-            },
-
+            // Xbox/View/Menu. Sekarang icon Xbox bisa diatur posisi dan tebalnya.
             centerButtons: {
                 xboxX: 300,
                 xboxY: 60,
                 xboxR: 24,
                 smallY: 130,
                 smallGap: 72,
-                smallR: 15,
-                iconSize: 0.9,
+                smallR: 16,
                 dx: 0,
-                dy: 0
+                dy: 0,
+
+                // Icon Xbox di dalam circle putih
+                iconSize: 0.9,
+                iconX: 0,          // minus = kiri, plus = kanan
+                iconY: -5,         // minus = naik, plus = turun
+                iconWeight: 1.4    // tebal outline icon, 0 = tanpa tambahan tebal
             }
         };
 
         const PAD_UI = {
-            stickOverlaySize: 84,     // ukuran area analog HTML/path/circularity
+            stickOverlaySize: 84,
             stickDotSize: 10,
             stickTravel: 32,
 
-            // INFO AXIS DI DEKAT ANALOG
-            // Ubah fontSize ini buat ngecilin/membesarkan teks AXIS 0/1/2/3 dan RAD.
             axisInfo: {
-                fontSize: 10,       // font utama tulisan axis di gamepad
-                valueFontSize: 10,  // font angka 0.000
-                labelFontSize: 10,  // font label AXIS/RAD
+                fontSize: 10,
+                valueFontSize: 10,
+                labelFontSize: 10,
                 lineHeight: 1.05,
                 gap: 3
             },
-
-            // Alias lama biar tetap kebaca kalau kamu sudah terbiasa ubah ini.
             axisFontSize: 10,
 
-            leftAxisText: {
-                left: -30,
-                top: 120,
-                width: 60,
-                gap: 3,
-                align: 'left'
-            },
-
-            rightAxisText: {
-                left: 120,
-                top: 20,
-                width: 60,
-                gap: 3,
-                align: 'left'
-            },
+            leftAxisText: { left: -30, top: 120, width: 60, gap: 3, align: 'left' },
+            rightAxisText: { left: 120, top: 20, width: 60, gap: 3, align: 'left' },
 
             triggerBar: {
-                leftX: 42,
-                rightX: 220,
+                leftX: 5,
+                rightX: 440,
                 top: 55,
                 height: 150,
                 width: 23,
                 fontSize: 16
             },
-
             uiFontScale: 1.0
         };
 
         // ==========================================================
-        // EASY MANUAL BOX / PANEL SETTINGS
-        // Bagian ini buat ngatur ukuran/posisi box tanpa menyentuh posisi gamepad.
-        // Bisa juga pakai tombol LAYOUT EDIT OFF/ON di atas lalu drag + resize pakai mouse.
+        // MANUAL BOX LAYOUT SETTINGS
+        // Ubah bagian ini saja untuk ngepasin box tanpa drag/save.
+        // dx/dy = geser, width/height = ukuran box, fontSize = isi box.
         // ==========================================================
         const UI_BOX_LAYOUT = {
-            editor: {
-                enabledDefault: false,
-                storageKey: 'gamepad-diagnostic-window-layout-v3',
-                minWidth: 120,
-                minHeight: 70,
-                snap: 1
-            },
-
             global: {
-                dx: -70,
-                dy: -10,
-                scale: 0.9,
+                dx: -35,
+                dy: 0,
+                scale: 0.94,
                 gap: 10,
-                cardPadding: 12,
-                titleFontSize: 13,
-                textFontSize: 12,
-                buttonFontSize: 14
+                titleFontSize: 12,
+                textFontSize: 11,
+                buttonFontSize: 12
             },
 
             statusBar: {
                 dx: 0,
                 dy: 0,
-                height: 40,
+                height: 38,
                 fontSize: 12
             },
 
-            // BOX BUTTON KANAN
             buttonPanel: {
-                dx: -180,
-                dy: 0,
+                dx: -260,
+                dy: 12,
                 scale: 1,
-                width: 330,
-                height: 420,       // kecilkan ini kalau box Buttons masih kepanjangan ke bawah
-                titleFontSize: 13,
-                buttonFontSize: 15,
-                chipHeight: 30,
-                chipGapX: 14,
-                chipGapY: 6,
-                padding: 14
+                width: 275,
+                height: 336,
+                titleFontSize: 12,
+                buttonFontSize: 13,
+                chipHeight: 27,
+                chipGapX: 10,
+                chipGapY: 5,
+                padding: 12
             },
 
             toolsGrid: {
-                dx: 0,
-                dy: -120,
+                dx: 120,
+                dy: 0,
                 scale: 1,
-                rowHeight: 210,
-                gap: 10
+                rowHeight: 180,
+                gap: 9
             },
 
-            // BOX BAWAH
-            // width/height = ukuran box.
-            // buttonFontSize/buttonHeight = ukuran teks/tombol seperti Soft, Hard, Full, Infinite.
             boxes: {
                 analogPath: {
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 230,
+                    width: 178,
                     height: 155,
-                    fontSize: 12,
-                    titleFontSize: 13,
-                    buttonFontSize: 13,
-                    buttonHeight: 30,
-                    padding: 12
+                    fontSize: 11,
+                    titleFontSize: 12,
+                    buttonFontSize: 11,
+                    buttonHeight: 27,
+                    buttonPadding: '4px 9px',
+                    padding: 11
                 },
                 circularity: {
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 355,
-                    height: 205,
-                    fontSize: 12,
-                    titleFontSize: 13,
-                    buttonFontSize: 12,
-                    buttonHeight: 28,
-                    miniCanvasSize: 104,
-                    padding: 12
+                    width: 350,
+                    height: 190,
+                    fontSize: 10,
+                    titleFontSize: 12,
+                    buttonFontSize: 10,
+                    buttonHeight: 24,
+                    buttonPadding: '3px 9px',
+                    miniCanvasSize: 88,
+                    padding: 10
                 },
                 vibration: {
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 260,
+                    width: 190,
                     height: 145,
-                    fontSize: 11,
-                    titleFontSize: 13,
-                    buttonFontSize: 12,   // Soft / Hard / Full / Infinite font
-                    buttonHeight: 30,
-                    buttonPadding: '5px 10px',
-                    padding: 12
+                    fontSize: 10,
+                    titleFontSize: 12,
+                    buttonFontSize: 11,
+                    buttonHeight: 27,
+                    buttonPadding: '4px 8px',
+                    padding: 10
                 },
                 axisValues: {
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 220,
-                    height: 145,
-                    fontSize: 12,
-                    titleFontSize: 13,
-                    buttonFontSize: 12,
-                    buttonHeight: 28,
-                    padding: 12
+                    width: 170,
+                    height: 150,
+                    fontSize: 11,
+                    titleFontSize: 12,
+                    buttonFontSize: 11,
+                    buttonHeight: 26,
+                    padding: 10
                 },
                 inputSummary: {
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 220,
-                    height: 145,
-                    fontSize: 12,
-                    titleFontSize: 13,
-                    buttonFontSize: 12,
-                    buttonHeight: 28,
-                    padding: 12
+                    width: 205,
+                    height: 150,
+                    fontSize: 11,
+                    titleFontSize: 12,
+                    buttonFontSize: 11,
+                    buttonHeight: 26,
+                    padding: 10
                 }
             },
 
             footer: {
                 dx: 0,
-                dy: -120,
-                height: 30,
-                fontSize: 12
+                dy: 0,
+                height: 28,
+                fontSize: 11
             }
         };
 
-        function triggerPath(x, y, w, h, flip = false) {
-            if (!flip) {
-                return `M${x} ${y} C${x + 16} ${y - 10} ${x + w - 29} ${y - 10} ${x + w - 7} ${y + 1} C${x + w - 2} ${y + 4} ${x + w} ${y + 9} ${x + w} ${y + h} L${x + 4} ${y + h} C${x + 2} ${y + h - 4} ${x + 1} ${y + 6} ${x} ${y} Z`;
-            }
-            return `M${x + w} ${y} C${x + w - 16} ${y - 10} ${x + 29} ${y - 10} ${x + 7} ${y + 1} C${x + 2} ${y + 4} ${x} ${y + 9} ${x} ${y + h} L${x + w - 4} ${y + h} C${x + w - 2} ${y + h - 4} ${x + w - 1} ${y + 6} ${x + w} ${y} Z`;
+        function roundedRectPath(x, y, w, h, r) {
+            return `M${x + r} ${y} H${x + w - r} Q${x + w} ${y} ${x + w} ${y + r} V${y + h - r} Q${x + w} ${y + h} ${x + w - r} ${y + h} H${x + r} Q${x} ${y + h} ${x} ${y + h - r} V${y + r} Q${x} ${y} ${x + r} ${y} Z`;
         }
 
         function plusPath(cx, cy, reach, arm) {
             const a = arm / 2;
-            return [
-                `M${cx - a} ${cy - reach}`,
-                `h${arm}`,
-                `v${reach - a}`,
-                `h${reach - a}`,
-                `v${arm}`,
-                `h${-(reach - a)}`,
-                `v${reach - a}`,
-                `h${-arm}`,
-                `v${-(reach - a)}`,
-                `h${-(reach - a)}`,
-                `v${-arm}`,
-                `h${reach - a}`,
-                'Z'
-            ].join(' ');
+            return [`M${cx - a} ${cy - reach}`, `h${arm}`, `v${reach - a}`, `h${reach - a}`, `v${arm}`, `h${-(reach - a)}`, `v${reach - a}`, `h${-arm}`, `v${-(reach - a)}`, `h${-(reach - a)}`, `v${-arm}`, `h${reach - a}`, 'Z'].join(' ');
         }
 
         function renderStickBase(s) {
@@ -1269,11 +1139,7 @@
         }
 
         function renderDpad() {
-            const d = PAD_LAYOUT.dpad;
-            const x = d.x + d.dx;
-            const y = d.y + d.dy;
-            const a = d.arm / 2;
-            const r = d.reach;
+            const d = PAD_LAYOUT.dpad; const x = d.x + d.dx; const y = d.y + d.dy; const a = d.arm / 2; const r = d.reach;
             return `
                 <g id="dpad-group">
                     <circle cx="${x}" cy="${y}" r="${d.ringR}" fill="none" stroke="#4e5d6f" stroke-width="2" opacity=".95" />
@@ -1291,12 +1157,7 @@
         }
 
         function renderAbxy() {
-            const b = PAD_LAYOUT.abxy;
-            const cx = b.x + b.dx;
-            const cy = b.y + b.dy;
-            const p = b.patternR;
-            const r = b.buttonR;
-            const ty = b.textYOffset;
+            const b = PAD_LAYOUT.abxy; const cx = b.x + b.dx; const cy = b.y + b.dy; const p = b.patternR; const r = b.buttonR; const ty = b.textYOffset;
             return `
                 <g id="abxy-group">
                     <circle cx="${cx}" cy="${cy - p}" r="${r}" fill="url(#buttonGrad)" stroke="#596575" stroke-width="2" id="btn-y" />
@@ -1317,19 +1178,23 @@
             const dy = c.dy;
             const x = c.xboxX + dx;
             const y = c.xboxY + dy;
+            const ix = x + (c.iconX ?? 0);
+            const iy = y + (c.iconY ?? 0);
             const viewX = c.xboxX - c.smallGap / 2 + dx;
             const menuX = c.xboxX + c.smallGap / 2 + dx;
             const smallY = c.smallY + dy;
             const icon = c.iconSize;
+            const weight = c.iconWeight ?? 0;
+
             return `
                 <g id="center-buttons-group">
                     <g id="xbox-btn">
                         <circle cx="${x}" cy="${y}" r="${c.xboxR}" fill="#eef4ff" stroke="#0c121c" stroke-width="3" />
                         <path
-                            d="M${x - 12 * icon} ${y - 16 * icon} C${x - 6 * icon} ${y - 20 * icon} ${x + 6 * icon} ${y - 20 * icon} ${x + 12 * icon} ${y - 16 * icon} C${x + 8 * icon} ${y - 9 * icon} ${x + 4 * icon} ${y - 4 * icon} ${x} ${y} C${x - 4 * icon} ${y - 4 * icon} ${x - 8 * icon} ${y - 9 * icon} ${x - 12 * icon} ${y - 16 * icon}Z
-                               M${x - 19 * icon} ${y - 7 * icon} C${x - 14 * icon} ${y - 3 * icon} ${x - 9 * icon} ${y + 2 * icon} ${x - 4 * icon} ${y + 8 * icon} C${x - 7 * icon} ${y + 14 * icon} ${x - 10 * icon} ${y + 21 * icon} ${x - 12 * icon} ${y + 28 * icon} C${x - 19 * icon} ${y + 20 * icon} ${x - 25 * icon} ${y + 11 * icon} ${x - 29 * icon} ${y + 2 * icon} C${x - 26 * icon} ${y - 1 * icon} ${x - 23 * icon} ${y - 4 * icon} ${x - 19 * icon} ${y - 7 * icon}Z
-                               M${x + 19 * icon} ${y - 7 * icon} C${x + 23 * icon} ${y - 4 * icon} ${x + 26 * icon} ${y - 1 * icon} ${x + 29 * icon} ${y + 2 * icon} C${x + 25 * icon} ${y + 11 * icon} ${x + 19 * icon} ${y + 20 * icon} ${x + 12 * icon} ${y + 28 * icon} C${x + 10 * icon} ${y + 21 * icon} ${x + 7 * icon} ${y + 14 * icon} ${x + 4 * icon} ${y + 8 * icon} C${x + 9 * icon} ${y + 2 * icon} ${x + 14 * icon} ${y - 3 * icon} ${x + 19 * icon} ${y - 7 * icon}Z"
-                            fill="#111822" />
+                            d="M${ix - 12 * icon} ${iy - 16 * icon} C${ix - 6 * icon} ${iy - 20 * icon} ${ix + 6 * icon} ${iy - 20 * icon} ${ix + 12 * icon} ${iy - 16 * icon} C${ix + 8 * icon} ${iy - 9 * icon} ${ix + 4 * icon} ${iy - 4 * icon} ${ix} ${iy} C${ix - 4 * icon} ${iy - 4 * icon} ${ix - 8 * icon} ${iy - 9 * icon} ${ix - 12 * icon} ${iy - 16 * icon}Z
+                            M${ix - 19 * icon} ${iy - 7 * icon} C${ix - 14 * icon} ${iy - 3 * icon} ${ix - 9 * icon} ${iy + 2 * icon} ${ix - 4 * icon} ${iy + 8 * icon} C${ix - 7 * icon} ${iy + 14 * icon} ${ix - 10 * icon} ${iy + 21 * icon} ${ix - 12 * icon} ${iy + 28 * icon} C${ix - 19 * icon} ${iy + 20 * icon} ${ix - 25 * icon} ${iy + 11 * icon} ${ix - 29 * icon} ${iy + 2 * icon} C${ix - 26 * icon} ${iy - 1 * icon} ${ix - 23 * icon} ${iy - 4 * icon} ${ix - 19 * icon} ${iy - 7 * icon}Z
+                            M${ix + 19 * icon} ${iy - 7 * icon} C${ix + 23 * icon} ${iy - 4 * icon} ${ix + 26 * icon} ${iy - 1 * icon} ${ix + 29 * icon} ${iy + 2 * icon} C${ix + 25 * icon} ${iy + 11 * icon} ${ix + 19 * icon} ${iy + 20 * icon} ${ix + 12 * icon} ${iy + 28 * icon} C${ix + 10 * icon} ${iy + 21 * icon} ${ix + 7 * icon} ${iy + 14 * icon} ${ix + 4 * icon} ${iy + 8 * icon} C${ix + 9 * icon} ${iy + 2 * icon} ${ix + 14 * icon} ${iy - 3 * icon} ${ix + 19 * icon} ${iy - 7 * icon}Z"
+                            fill="#111822" stroke="#111822" stroke-width="${weight}" stroke-linejoin="round" />
                     </g>
                     <circle cx="${viewX}" cy="${smallY}" r="${c.smallR}" fill="url(#buttonGrad)" stroke="#2d3948" stroke-width="2" id="view-btn" />
                     <circle cx="${menuX}" cy="${smallY}" r="${c.smallR}" fill="url(#buttonGrad)" stroke="#2d3948" stroke-width="2" id="menu-btn" />
@@ -1346,18 +1211,19 @@
             const l = PAD_LAYOUT.leftShoulder;
             const r = PAD_LAYOUT.rightShoulder;
             const ly = l.dy, lx = l.dx, ry = r.dy, rx = r.dx;
+
             return `
                 <g id="left-shoulder-group" transform="translate(${lx},${ly})">
-                    <path id="lt-shape" d="${triggerPath(l.ltX, l.ltY, l.ltW, l.ltH, false)}" fill="#0b131d" stroke="#334154" stroke-width="1.85" />
+                    <rect id="lt-shape" x="${l.ltX}" y="${l.ltY}" width="${l.ltW}" height="${l.ltH}" rx="${l.radius}" fill="#0b131d" stroke="#334154" stroke-width="1.85" />
                     <rect id="lb-shape" x="${l.lbX}" y="${l.lbY}" width="${l.lbW}" height="${l.lbH}" rx="${l.radius}" fill="#111a25" stroke="#334154" stroke-width="1.65" />
-                    <text x="${l.ltX + l.ltW / 2}" y="${l.ltY + l.ltH - 6}" text-anchor="middle" font-size="${l.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">LT</text>
-                    <text x="${l.lbX + l.lbW / 2}" y="${l.lbY + l.lbH - 11}" text-anchor="middle" font-size="${l.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">LB</text>
+                    <text x="${l.ltX + l.ltW / 2}" y="${l.ltY + (l.textYOffsetLT ?? 15)}" text-anchor="middle" font-size="${l.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">LT</text>
+                    <text x="${l.lbX + l.lbW / 2}" y="${l.lbY + (l.textYOffsetLB ?? 21)}" text-anchor="middle" font-size="${l.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">LB</text>
                 </g>
                 <g id="right-shoulder-group" transform="translate(${rx},${ry})">
-                    <path id="rt-shape" d="${triggerPath(r.rtX, r.rtY, r.rtW, r.rtH, true)}" fill="#0b131d" stroke="#334154" stroke-width="1.85" />
+                    <rect id="rt-shape" x="${r.rtX}" y="${r.rtY}" width="${r.rtW}" height="${r.rtH}" rx="${r.radius}" fill="#0b131d" stroke="#334154" stroke-width="1.85" />
                     <rect id="rb-shape" x="${r.rbX}" y="${r.rbY}" width="${r.rbW}" height="${r.rbH}" rx="${r.radius}" fill="#111a25" stroke="#334154" stroke-width="1.65" />
-                    <text x="${r.rtX + r.rtW / 2}" y="${r.rtY + r.rtH - 6}" text-anchor="middle" font-size="${r.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">RT</text>
-                    <text x="${r.rbX + r.rbW / 2}" y="${r.rbY + r.rbH - 11}" text-anchor="middle" font-size="${r.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">RB</text>
+                    <text x="${r.rtX + r.rtW / 2}" y="${r.rtY + (r.textYOffsetRT ?? 15)}" text-anchor="middle" font-size="${r.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">RT</text>
+                    <text x="${r.rbX + r.rbW / 2}" y="${r.rbY + (r.textYOffsetRB ?? 21)}" text-anchor="middle" font-size="${r.fontSize}" fill="#91a7bf" font-family="Share Tech Mono">RB</text>
                 </g>
             `;
         }
@@ -1365,19 +1231,11 @@
         function renderControllerSvg() {
             const content = document.getElementById('controller-content');
             if (!content) return;
-
             content.innerHTML = `
-                <path
-                    d="M302.463 1H297.539C266.052 0.998865 238.056 0.99764 200.553 2.49902C175.594 3.49822 163.581 4.45749 140.3 11.7617C114.877 19.7381 99.9226 27.9746 88.7715 38.9912C77.5928 50.0351 70.1639 63.9345 59.8975 83.4658C30.1615 140.037 1 207.933 1 294.307C1 328.126 3.85109 354.41 10.0947 372.207C13.2146 381.1 17.1582 387.802 21.9502 392.273C26.719 396.723 32.3657 399 39.0127 399C42.4853 399 54.6511 399.488 66.3545 389.247C106.038 354.524 128.219 326.68 144.773 309.121C154.465 298.842 162.857 293.102 172.157 289.959C181.427 286.827 191.515 286.307 204.5 286.307H395.5C408.485 286.307 418.573 286.827 427.843 289.959C437.144 293.102 445.536 298.841 455.228 309.121C471.782 326.68 493.974 354.524 533.658 389.248C545.362 399.489 557.527 399 561 399C567.647 399 573.293 396.724 578.061 392.274C582.851 387.803 586.793 381.101 589.911 372.208C596.152 354.411 599 328.126 599 294.307C599 207.933 569.851 140.037 540.115 83.4658C529.849 63.9345 522.42 50.0351 511.241 38.9912C500.09 27.9746 485.136 19.7381 459.713 11.7617C436.432 4.45745 424.419 3.49822 399.46 2.49902C361.957 0.997667 333.95 0.998863 302.463 1Z"
-                    fill="url(#bodyGrad)" stroke="#354254" stroke-width="${PAD_LAYOUT.body.strokeWidth}" />
-
-                <path d="M121 22 C143 7 183 7 206 24 C218 33 221 48 224 65" fill="none" stroke="#354254"
-                    stroke-width="2.1" opacity=".86" />
-                <path d="M479 22 C457 7 417 7 394 24 C382 33 379 48 376 65" fill="none" stroke="#354254"
-                    stroke-width="2.1" opacity=".86" />
-                <path d="M221 63 C237 96 263 111 300 111 C337 111 363 96 379 63" fill="none" stroke="#354254"
-                    stroke-width="2.1" opacity=".82" />
-
+                <path d="M302.463 1H297.539C266.052 0.998865 238.056 0.99764 200.553 2.49902C175.594 3.49822 163.581 4.45749 140.3 11.7617C114.877 19.7381 99.9226 27.9746 88.7715 38.9912C77.5928 50.0351 70.1639 63.9345 59.8975 83.4658C30.1615 140.037 1 207.933 1 294.307C1 328.126 3.85109 354.41 10.0947 372.207C13.2146 381.1 17.1582 387.802 21.9502 392.273C26.719 396.723 32.3657 399 39.0127 399C42.4853 399 54.6511 399.488 66.3545 389.247C106.038 354.524 128.219 326.68 144.773 309.121C154.465 298.842 162.857 293.102 172.157 289.959C181.427 286.827 191.515 286.307 204.5 286.307H395.5C408.485 286.307 418.573 286.827 427.843 289.959C437.144 293.102 445.536 298.841 455.228 309.121C471.782 326.68 493.974 354.524 533.658 389.248C545.362 399.489 557.527 399 561 399C567.647 399 573.293 396.724 578.061 392.274C582.851 387.803 586.793 381.101 589.911 372.208C596.152 354.411 599 328.126 599 294.307C599 207.933 569.851 140.037 540.115 83.4658C529.849 63.9345 522.42 50.0351 511.241 38.9912C500.09 27.9746 485.136 19.7381 459.713 11.7617C436.432 4.45745 424.419 3.49822 399.46 2.49902C361.957 0.997667 333.95 0.998863 302.463 1Z" fill="url(#bodyGrad)" stroke="#354254" stroke-width="${PAD_LAYOUT.body.strokeWidth}" />
+                <path d="M121 22 C143 7 183 7 206 24 C218 33 221 48 224 65" fill="none" stroke="#354254" stroke-width="2.1" opacity=".86" />
+                <path d="M479 22 C457 7 417 7 394 24 C382 33 379 48 376 65" fill="none" stroke="#354254" stroke-width="2.1" opacity=".86" />
+                <path d="M221 63 C237 96 263 111 300 111 C337 111 363 96 379 63" fill="none" stroke="#354254" stroke-width="2.1" opacity=".82" />
                 ${renderShoulders()}
                 ${renderCenterButtons()}
                 <g id="left-stick-base">${renderStickBase(PAD_LAYOUT.leftStick)}</g>
@@ -1392,11 +1250,7 @@
             STICK_CENTER = STICK_SIZE / 2;
             STICK_TRAVEL = PAD_UI.stickTravel;
 
-            document.querySelectorAll('.stick-overlay').forEach(el => {
-                el.style.width = `${PAD_UI.stickOverlaySize}px`;
-            });
-
-            document.querySelectorAll('.stick-ring').forEach(el => {
+            document.querySelectorAll('.stick-overlay, .stick-ring').forEach(el => {
                 el.style.width = `${PAD_UI.stickOverlaySize}px`;
                 el.style.height = `${PAD_UI.stickOverlaySize}px`;
             });
@@ -1425,13 +1279,8 @@
                 info.style.gap = `${axis.gap ?? 3}px`;
             });
 
-            document.querySelectorAll('.stick-info .lab').forEach(label => {
-                label.style.fontSize = `${labelFont}px`;
-            });
-
-            document.querySelectorAll('.stick-info span:not(.lab)').forEach(value => {
-                value.style.fontSize = `${valueFont}px`;
-            });
+            document.querySelectorAll('.stick-info .lab').forEach(label => { label.style.fontSize = `${labelFont}px`; });
+            document.querySelectorAll('.stick-info span:not(.lab)').forEach(value => { value.style.fontSize = `${valueFont}px`; });
 
             const lInfo = document.querySelector('.stick-overlay.left .stick-info');
             if (lInfo) {
@@ -1454,7 +1303,6 @@
 
         function applyBoxLayoutSettings() {
             const g = UI_BOX_LAYOUT.global;
-
             document.body.style.setProperty('--box-global-font-size', `${g.textFontSize}px`);
 
             const status = document.getElementById('status-bar');
@@ -1468,7 +1316,9 @@
             if (dashboard) {
                 dashboard.style.gap = `${g.gap}px`;
                 dashboard.style.gridTemplateColumns = `minmax(880px, 1fr) ${UI_BOX_LAYOUT.buttonPanel.width}px`;
-                dashboard.style.gridTemplateRows = `minmax(455px, 53vh) ${UI_BOX_LAYOUT.toolsGrid.rowHeight}px ${UI_BOX_LAYOUT.footer.height}px`;
+                dashboard.style.gridTemplateRows = `minmax(0, 1fr) ${UI_BOX_LAYOUT.toolsGrid.rowHeight}px ${UI_BOX_LAYOUT.footer.height}px`;
+                dashboard.style.height = `calc(100vh - 104px)`;
+                dashboard.style.maxHeight = `calc(100vh - 104px)`;
                 dashboard.style.transform = `translate(${g.dx}px, ${g.dy}px) scale(${g.scale})`;
                 dashboard.style.transformOrigin = 'top center';
             }
@@ -1482,14 +1332,9 @@
                 side.style.height = `${b.height}px`;
                 side.style.padding = `${b.padding}px`;
                 side.style.alignSelf = 'start';
-                side.style.overflow = 'auto';
-                side.classList.add('window-panel');
-                side.dataset.panelKey = 'buttonPanel';
+                side.style.overflow = 'hidden';
                 const title = side.querySelector('.section-label');
-                if (title) {
-                    title.style.fontSize = `${b.titleFontSize}px`;
-                    title.classList.add('window-title-drag');
-                }
+                if (title) title.style.fontSize = `${b.titleFontSize}px`;
                 const track = side.querySelector('.btn-track');
                 if (track) track.style.gap = `${b.chipGapY}px ${b.chipGapX}px`;
                 side.querySelectorAll('.btn-chip').forEach(chip => {
@@ -1514,40 +1359,31 @@
                 const names = ['analogPath', 'circularity', 'vibration', 'axisValues', 'inputSummary'];
 
                 cards.forEach((card, idx) => {
-                    const key = names[idx];
-                    const cfg = b[key];
+                    const cfg = b[names[idx]];
                     if (!cfg) return;
-                    card.classList.add('window-panel');
-                    card.dataset.panelKey = key;
                     card.style.transform = `translate(${cfg.dx}px, ${cfg.dy}px) scale(${cfg.scale})`;
                     card.style.transformOrigin = 'top left';
                     card.style.width = `${cfg.width}px`;
                     card.style.height = `${cfg.height}px`;
                     card.style.padding = `${cfg.padding}px`;
-                    card.style.overflow = 'auto';
+                    card.style.overflow = 'hidden';
                     card.style.alignSelf = 'start';
 
                     const title = card.querySelector('.tool-title');
-                    if (title) {
-                        title.style.fontSize = `${cfg.titleFontSize}px`;
-                        title.classList.add('window-title-drag');
-                    }
-
+                    if (title) title.style.fontSize = `${cfg.titleFontSize}px`;
                     card.querySelectorAll('.legend, .metric, .mini-circ, .axis-list, .summary-list, .poll-box').forEach(el => {
                         el.style.fontSize = `${cfg.fontSize}px`;
                     });
-
                     if (cfg.miniCanvasSize) {
                         card.querySelectorAll('.mini-circ canvas').forEach(canvas => {
                             canvas.style.width = `${cfg.miniCanvasSize}px`;
                             canvas.style.height = `${cfg.miniCanvasSize}px`;
                         });
                     }
-
                     card.querySelectorAll('.ui-btn').forEach(btn => {
                         btn.style.fontSize = `${cfg.buttonFontSize ?? UI_BOX_LAYOUT.global.buttonFontSize}px`;
-                        btn.style.minHeight = `${cfg.buttonHeight ?? 30}px`;
-                        btn.style.padding = cfg.buttonPadding ?? '5px 10px';
+                        btn.style.minHeight = `${cfg.buttonHeight ?? 28}px`;
+                        btn.style.padding = cfg.buttonPadding ?? '4px 9px';
                     });
                 });
             }
@@ -1561,152 +1397,6 @@
             }
         }
 
-        function getSavedPanelLayout() {
-            try {
-                return JSON.parse(localStorage.getItem(UI_BOX_LAYOUT.editor.storageKey) || '{}');
-            } catch (err) {
-                return {};
-            }
-        }
-
-        function savePanelLayoutState() {
-            const saved = {};
-            document.querySelectorAll('.window-panel[data-panel-key]').forEach(panel => {
-                saved[panel.dataset.panelKey] = {
-                    left: parseFloat(panel.style.left || 0) || 0,
-                    top: parseFloat(panel.style.top || 0) || 0,
-                    width: panel.style.width || '',
-                    height: panel.style.height || ''
-                };
-            });
-            localStorage.setItem(UI_BOX_LAYOUT.editor.storageKey, JSON.stringify(saved));
-        }
-
-        function restorePanelLayoutState() {
-            const saved = getSavedPanelLayout();
-            document.querySelectorAll('.window-panel[data-panel-key]').forEach(panel => {
-                const cfg = saved[panel.dataset.panelKey];
-                if (!cfg) return;
-                panel.style.left = `${cfg.left || 0}px`;
-                panel.style.top = `${cfg.top || 0}px`;
-                if (cfg.width) panel.style.width = cfg.width;
-                if (cfg.height) panel.style.height = cfg.height;
-            });
-        }
-
-        function setupWindowLayoutEditor() {
-            const panels = [
-                document.querySelector('.side-panel'),
-                ...document.querySelectorAll('.tools-grid .tool-card')
-            ].filter(Boolean);
-
-            panels.forEach(panel => {
-                panel.classList.add('window-panel');
-                panel.style.position = 'relative';
-                panel.style.left = panel.style.left || '0px';
-                panel.style.top = panel.style.top || '0px';
-
-                const title = panel.querySelector('.section-label, .tool-title');
-                if (title) title.classList.add('window-title-drag');
-
-                if (!panel.querySelector('.window-resize-handle')) {
-                    const handle = document.createElement('div');
-                    handle.className = 'window-resize-handle';
-                    panel.appendChild(handle);
-                }
-            });
-
-            restorePanelLayoutState();
-
-            let editMode = false;
-            const editBtn = document.getElementById('layout-edit-btn');
-            const resetBtn = document.getElementById('layout-reset-btn');
-
-            const setEditMode = on => {
-                editMode = on;
-                document.body.classList.toggle('layout-edit-mode', editMode);
-                if (editBtn) {
-                    editBtn.classList.toggle('active', editMode);
-                    editBtn.textContent = editMode ? 'LAYOUT EDIT ON' : 'LAYOUT EDIT OFF';
-                }
-            };
-
-            if (editBtn) editBtn.onclick = () => setEditMode(!editMode);
-            if (resetBtn) resetBtn.onclick = () => {
-                localStorage.removeItem(UI_BOX_LAYOUT.editor.storageKey);
-                document.querySelectorAll('.window-panel[data-panel-key]').forEach(panel => {
-                    panel.style.left = '0px';
-                    panel.style.top = '0px';
-                });
-                applyEasyLayoutSettings();
-                setupWindowLayoutEditor();
-                setEditMode(false);
-            };
-
-            panels.forEach(panel => {
-                const title = panel.querySelector('.window-title-drag');
-                const handle = panel.querySelector('.window-resize-handle');
-
-                if (title && !title.dataset.dragBound) {
-                    title.dataset.dragBound = '1';
-                    title.addEventListener('pointerdown', e => {
-                        if (!editMode) return;
-                        e.preventDefault();
-                        panel.setPointerCapture?.(e.pointerId);
-                        const startX = e.clientX;
-                        const startY = e.clientY;
-                        const startLeft = parseFloat(panel.style.left || 0) || 0;
-                        const startTop = parseFloat(panel.style.top || 0) || 0;
-
-                        const move = ev => {
-                            const snap = UI_BOX_LAYOUT.editor.snap || 1;
-                            const nx = Math.round((startLeft + ev.clientX - startX) / snap) * snap;
-                            const ny = Math.round((startTop + ev.clientY - startY) / snap) * snap;
-                            panel.style.left = `${nx}px`;
-                            panel.style.top = `${ny}px`;
-                        };
-                        const up = () => {
-                            window.removeEventListener('pointermove', move);
-                            window.removeEventListener('pointerup', up);
-                            savePanelLayoutState();
-                        };
-                        window.addEventListener('pointermove', move);
-                        window.addEventListener('pointerup', up);
-                    });
-                }
-
-                if (handle && !handle.dataset.resizeBound) {
-                    handle.dataset.resizeBound = '1';
-                    handle.addEventListener('pointerdown', e => {
-                        if (!editMode) return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const startX = e.clientX;
-                        const startY = e.clientY;
-                        const rect = panel.getBoundingClientRect();
-                        const startW = rect.width;
-                        const startH = rect.height;
-                        const minW = UI_BOX_LAYOUT.editor.minWidth || 120;
-                        const minH = UI_BOX_LAYOUT.editor.minHeight || 70;
-
-                        const move = ev => {
-                            panel.style.width = `${Math.max(minW, startW + ev.clientX - startX)}px`;
-                            panel.style.height = `${Math.max(minH, startH + ev.clientY - startY)}px`;
-                        };
-                        const up = () => {
-                            window.removeEventListener('pointermove', move);
-                            window.removeEventListener('pointerup', up);
-                            savePanelLayoutState();
-                        };
-                        window.addEventListener('pointermove', move);
-                        window.addEventListener('pointerup', up);
-                    });
-                }
-            });
-
-            setEditMode(UI_BOX_LAYOUT.editor.enabledDefault);
-        }
-
         function applyEasyLayoutSettings() {
             const svg = document.getElementById('controller-svg');
             if (svg) {
@@ -1714,43 +1404,28 @@
                 svg.style.top = `${PAD_LAYOUT.controller.topPercent}%`;
                 svg.style.left = `calc(50% + ${PAD_LAYOUT.controller.xShiftPercent}%)`;
                 svg.style.transform = 'translateX(-50%)';
-                svg.style.overflow = 'visible'; // fix: LT/LB/RT/RB tidak kepotong walau group digeser keluar viewBox
+                svg.style.overflow = 'visible';
             }
 
             const leftTrig = document.querySelector('.trigger-zone.left');
-            if (leftTrig) {
-                leftTrig.style.left = `${PAD_UI.triggerBar.leftX}px`;
-                leftTrig.style.top = `${PAD_UI.triggerBar.top}px`;
-                leftTrig.style.fontSize = `${PAD_UI.triggerBar.fontSize}px`;
-            }
+            if (leftTrig) { leftTrig.style.left = `${PAD_UI.triggerBar.leftX}px`; leftTrig.style.top = `${PAD_UI.triggerBar.top}px`; leftTrig.style.fontSize = `${PAD_UI.triggerBar.fontSize}px`; }
 
             const rightTrig = document.querySelector('.trigger-zone.right');
-            if (rightTrig) {
-                rightTrig.style.right = `${PAD_UI.triggerBar.rightX}px`;
-                rightTrig.style.top = `${PAD_UI.triggerBar.top}px`;
-                rightTrig.style.fontSize = `${PAD_UI.triggerBar.fontSize}px`;
-            }
+            if (rightTrig) { rightTrig.style.right = `${PAD_UI.triggerBar.rightX}px`; rightTrig.style.top = `${PAD_UI.triggerBar.top}px`; rightTrig.style.fontSize = `${PAD_UI.triggerBar.fontSize}px`; }
 
-            document.querySelectorAll('.trigger-track').forEach(track => {
-                track.style.height = `${PAD_UI.triggerBar.height}px`;
-                track.style.width = `${PAD_UI.triggerBar.width}px`;
-            });
+            document.querySelectorAll('.trigger-track').forEach(track => { track.style.height = `${PAD_UI.triggerBar.height}px`; track.style.width = `${PAD_UI.triggerBar.width}px`; });
 
             syncAnalogCanvasSizes();
             applyBoxLayoutSettings();
             syncControllerOverlays();
         }
 
-
         const CIRC_BINS = 72, TRAIL_LEN = 160;
         let STICK_SIZE = PAD_UI.stickOverlaySize, STICK_CENTER = STICK_SIZE / 2, STICK_TRAVEL = PAD_UI.stickTravel;
         let started = false, historyOn = true, circOn = false, vibTimer = null;
         let lsTrail = [], rsTrail = [], testedSet = new Set();
         let lastTime = performance.now(), frames = 0, fps = 0, connectedOnce = false;
-        let circData = {
-            left: { bins: new Array(CIRC_BINS).fill(0), samples: 0 },
-            right: { bins: new Array(CIRC_BINS).fill(0), samples: 0 }
-        };
+        let circData = { left: { bins: new Array(CIRC_BINS).fill(0), samples: 0 }, right: { bins: new Array(CIRC_BINS).fill(0), samples: 0 } };
 
         function buildButtons() {
             const track = document.getElementById('btn-track');
@@ -1764,10 +1439,7 @@
             });
         }
 
-        function getPad() {
-            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-            return [...pads].find(Boolean);
-        }
+        function getPad() { const pads = navigator.getGamepads ? navigator.getGamepads() : []; return [...pads].find(Boolean); }
 
         function browserLabel() {
             const ua = navigator.userAgent;
@@ -1811,18 +1483,14 @@
                 const alpha = (i / pts.length) * .68;
                 ctx.beginPath();
                 ctx.strokeStyle = color.replace('1)', `${alpha})`);
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
-                ctx.lineTo(pts[i].x, pts[i].y);
+                ctx.lineWidth = 2; ctx.lineCap = 'round';
+                ctx.moveTo(pts[i - 1].x, pts[i - 1].y); ctx.lineTo(pts[i].x, pts[i].y);
                 ctx.stroke();
             }
         }
 
         function updateStick(ax, ay, ids, arr, color) {
-            const px = ax * STICK_TRAVEL;
-            const py = ay * STICK_TRAVEL;
-            const rad = Math.hypot(ax, ay);
+            const px = ax * STICK_TRAVEL; const py = ay * STICK_TRAVEL; const rad = Math.hypot(ax, ay);
             document.getElementById(ids.dot).style.transform = `translate(${px}px,${py}px)`;
             document.getElementById(ids.x).textContent = ax.toFixed(3);
             document.getElementById(ids.y).textContent = ay.toFixed(3);
@@ -1838,14 +1506,8 @@
         function svgHighlight(id, on, color = '#00f0a8') {
             const el = document.getElementById(id);
             if (!el) return;
-            if (id === 'xbox-btn') {
-                el.style.filter = on ? 'url(#glow)' : '';
-                el.style.opacity = on ? '1' : '';
-                return;
-            }
-            el.style.fill = on ? color : '';
-            el.style.stroke = on ? color : '';
-            el.style.filter = on ? 'url(#glow)' : '';
+            if (id === 'xbox-btn') { el.style.filter = on ? 'url(#glow)' : ''; el.style.opacity = on ? '1' : ''; return; }
+            el.style.fill = on ? color : ''; el.style.stroke = on ? color : ''; el.style.filter = on ? 'url(#glow)' : '';
         }
 
         function calcCirc(data) {
@@ -1855,79 +1517,51 @@
         }
 
         function drawCircCanvas(id, data, color, size = 96) {
-            const c = document.getElementById(id);
-            const ctx = c.getContext('2d');
+            const c = document.getElementById(id); const ctx = c.getContext('2d');
             const w = c.width, h = c.height, cx = w / 2, cy = h / 2, R = (size / 2) - 6;
             ctx.clearRect(0, 0, w, h);
             if (!circOn && id.includes('-circ')) return;
             if (id.includes('-circ')) c.style.display = 'block';
 
-            ctx.strokeStyle = 'rgba(180,210,255,.20)';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(180,210,255,.20)'; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
 
             for (let i = 0; i < CIRC_BINS; i++) {
-                const a0 = (i / CIRC_BINS) * Math.PI * 2 - Math.PI;
-                const a1 = ((i + 1) / CIRC_BINS) * Math.PI * 2 - Math.PI;
+                const a0 = (i / CIRC_BINS) * Math.PI * 2 - Math.PI; const a1 = ((i + 1) / CIRC_BINS) * Math.PI * 2 - Math.PI;
                 const r = Math.min(data.bins[i], 1);
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, R, a0, a1);
-                ctx.closePath();
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath();
                 ctx.fillStyle = r > .90 ? color.replace('1)', '.30)') : r > .45 ? color.replace('1)', '.14)') : 'rgba(255,255,255,.045)';
                 ctx.fill();
                 ctx.strokeStyle = r > .90 ? color.replace('1)', '.75)') : 'rgba(120,145,175,.15)';
-                ctx.lineWidth = .65;
-                ctx.stroke();
+                ctx.lineWidth = .65; ctx.stroke();
             }
 
-            for (let ring = 1; ring <= 2; ring++) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, R * ring / 2, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(180,210,255,.14)';
-                ctx.stroke();
-            }
+            for (let ring = 1; ring <= 2; ring++) { ctx.beginPath(); ctx.arc(cx, cy, R * ring / 2, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(180,210,255,.14)'; ctx.stroke(); }
 
-            ctx.beginPath();
-            ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy);
-            ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R);
-            ctx.strokeStyle = 'rgba(180,210,255,.16)';
-            ctx.stroke();
-
-            ctx.fillStyle = color.replace('1)', '.95)');
-            ctx.beginPath();
-            ctx.arc(cx, cy, Math.max(3, size / 26), 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.strokeStyle = 'rgba(180,210,255,.16)'; ctx.stroke();
+            ctx.fillStyle = color.replace('1)', '.95)'); ctx.beginPath(); ctx.arc(cx, cy, Math.max(3, size / 26), 0, Math.PI * 2); ctx.fill();
         }
 
         function renderCircularity() {
-            const left = calcCirc(circData.left);
-            const right = calcCirc(circData.right);
-
+            const left = calcCirc(circData.left), right = calcCirc(circData.right);
             document.querySelector('#ls-avg span').textContent = left.samples ? left.err.toFixed(1) + '%' : '—';
             document.querySelector('#rs-avg span').textContent = right.samples ? right.err.toFixed(1) + '%' : '—';
-            document.getElementById('ls-avg').classList.toggle('on', circOn);
-            document.getElementById('rs-avg').classList.toggle('on', circOn);
-            document.getElementById('ls-circ').style.display = circOn ? 'block' : 'none';
-            document.getElementById('rs-circ').style.display = circOn ? 'block' : 'none';
+            document.getElementById('ls-avg').classList.toggle('on', circOn); document.getElementById('rs-avg').classList.toggle('on', circOn);
+            document.getElementById('ls-circ').style.display = circOn ? 'block' : 'none'; document.getElementById('rs-circ').style.display = circOn ? 'block' : 'none';
 
-            drawCircCanvas('ls-circ', circData.left, 'rgba(0,240,168,1)', STICK_SIZE);
-            drawCircCanvas('rs-circ', circData.right, 'rgba(25,191,255,1)', STICK_SIZE);
-            drawCircCanvas('mini-l', circData.left, 'rgba(0,240,168,1)', 128);
-            drawCircCanvas('mini-r', circData.right, 'rgba(25,191,255,1)', 128);
+            drawCircCanvas('ls-circ', circData.left, 'rgba(0,240,168,1)', STICK_SIZE); drawCircCanvas('rs-circ', circData.right, 'rgba(25,191,255,1)', STICK_SIZE);
+            drawCircCanvas('mini-l', circData.left, 'rgba(0,240,168,1)', 128); drawCircCanvas('mini-r', circData.right, 'rgba(25,191,255,1)', 128);
 
             document.getElementById('mini-l-err').textContent = left.samples ? left.err.toFixed(1) + '%' : '—';
             document.getElementById('mini-r-err').textContent = right.samples ? right.err.toFixed(1) + '%' : '—';
             document.getElementById('mini-l-cov').textContent = left.samples ? left.cov.toFixed(1) + '%' : '—';
             document.getElementById('mini-r-cov').textContent = right.samples ? right.cov.toFixed(1) + '%' : '—';
-            document.getElementById('mini-l-samples').textContent = left.samples || '—';
-            document.getElementById('mini-r-samples').textContent = right.samples || '—';
+            document.getElementById('mini-l-samples').textContent = left.samples || '—'; document.getElementById('mini-r-samples').textContent = right.samples || '—';
         }
 
         function updateCirc(name, ax, ay) {
             if (!circOn) return;
-            const radius = Math.hypot(ax, ay);
-            if (radius < .25) return;
+            const radius = Math.hypot(ax, ay); if (radius < .25) return;
             const angle = Math.atan2(ay, ax);
             const bin = Math.floor(((angle + Math.PI) / (Math.PI * 2)) * CIRC_BINS) % CIRC_BINS;
             circData[name].bins[bin] = Math.max(circData[name].bins[bin], Math.min(radius, 1));
@@ -1935,195 +1569,93 @@
         }
 
         async function vibrate(weak, strong, duration = 650) {
-            const gp = getPad();
-            const actuator = gp && (gp.vibrationActuator || gp.hapticActuators?.[0]);
-            if (!actuator) {
-                document.getElementById('vib-status').textContent = 'Status: vibration tidak didukung browser/controller';
-                return;
-            }
+            const gp = getPad(); const actuator = gp && (gp.vibrationActuator || gp.hapticActuators?.[0]);
+            if (!actuator) { document.getElementById('vib-status').textContent = 'Status: vibration tidak didukung browser/controller'; return; }
             try {
-                if (actuator.playEffect) {
-                    await actuator.playEffect('dual-rumble', { startDelay: 0, duration, weakMagnitude: weak, strongMagnitude: strong });
-                } else if (actuator.pulse) {
-                    await actuator.pulse(Math.max(weak, strong), duration);
-                }
+                if (actuator.playEffect) { await actuator.playEffect('dual-rumble', { startDelay: 0, duration, weakMagnitude: weak, strongMagnitude: strong }); }
+                else if (actuator.pulse) { await actuator.pulse(Math.max(weak, strong), duration); }
                 document.getElementById('vib-status').textContent = `Status: vibrate ${duration}ms`;
-            } catch (err) {
-                document.getElementById('vib-status').textContent = 'Status: gagal vibrate';
-            }
+            } catch (err) { document.getElementById('vib-status').textContent = 'Status: gagal vibrate'; }
         }
 
         function updateAxisList(gp, lt, rt) {
             const a = gp.axes;
-            document.getElementById('axis-list').innerHTML = `
-        <div class="axis-row"><span>Axis 0 (L X)</span><span>${(a[0] || 0).toFixed(3)}</span></div>
-        <div class="axis-row"><span>Axis 1 (L Y)</span><span>${(a[1] || 0).toFixed(3)}</span></div>
-        <div class="axis-row r"><span>Axis 2 (R X)</span><span>${(a[2] || 0).toFixed(3)}</span></div>
-        <div class="axis-row r"><span>Axis 3 (R Y)</span><span>${(a[3] || 0).toFixed(3)}</span></div>
-        <div class="axis-row"><span>LT</span><span>${lt.toFixed(2)}</span></div>
-        <div class="axis-row r"><span>RT</span><span>${rt.toFixed(2)}</span></div>`;
+            document.getElementById('axis-list').innerHTML = `<div class="axis-row"><span>Axis 0 (L X)</span><span>${(a[0] || 0).toFixed(3)}</span></div><div class="axis-row"><span>Axis 1 (L Y)</span><span>${(a[1] || 0).toFixed(3)}</span></div><div class="axis-row r"><span>Axis 2 (R X)</span><span>${(a[2] || 0).toFixed(3)}</span></div><div class="axis-row r"><span>Axis 3 (R Y)</span><span>${(a[3] || 0).toFixed(3)}</span></div><div class="axis-row"><span>LT</span><span>${lt.toFixed(2)}</span></div><div class="axis-row r"><span>RT</span><span>${rt.toFixed(2)}</span></div>`;
         }
 
-        function hasVibration(gp) {
-            return !!(gp && (gp.vibrationActuator || gp.hapticActuators?.[0]));
-        }
+        function hasVibration(gp) { return !!(gp && (gp.vibrationActuator || gp.hapticActuators?.[0])); }
 
         function updateSummary(gp) {
-            const buttonTotal = gp ? gp.buttons.length : 0;
-            const buttonPressedCount = gp ? gp.buttons.filter(b => b.pressed || b.value > .5).length : 0;
-            const axisTotal = gp ? gp.axes.length : 0;
-            const axisMoved = gp ? gp.axes.filter(v => Math.abs(v) > .08).length : 0;
+            const buttonTotal = gp ? gp.buttons.length : 0; const buttonPressedCount = gp ? gp.buttons.filter(b => b.pressed || b.value > .5).length : 0;
+            const axisTotal = gp ? gp.axes.length : 0; const axisMoved = gp ? gp.axes.filter(v => Math.abs(v) > .08).length : 0;
             const pov = gp ? [12, 13, 14, 15].filter(i => gp.buttons[i] && gp.buttons[i].pressed).length : 0;
-            document.getElementById('summary-list').innerHTML = `
-        <div class="summary-row"><span>Buttons</span><span>${buttonPressedCount} / ${buttonTotal}</span></div>
-        <div class="summary-row"><span>Axes</span><span>${axisMoved} / ${axisTotal}</span></div>
-        <div class="summary-row"><span>POV (D-Pad)</span><span>${pov} / 4</span></div>
-        <div class="summary-row"><span>Vibration</span><span>${hasVibration(gp) ? 'Yes' : 'No'}</span></div>
-        <div class="summary-row"><span>Connected</span><span>${gp ? 'Yes' : 'No'}</span></div>`;
+            document.getElementById('summary-list').innerHTML = `<div class="summary-row"><span>Buttons</span><span>${buttonPressedCount} / ${buttonTotal}</span></div><div class="summary-row"><span>Axes</span><span>${axisMoved} / ${axisTotal}</span></div><div class="summary-row"><span>POV (D-Pad)</span><span>${pov} / 4</span></div><div class="summary-row"><span>Vibration</span><span>${hasVibration(gp) ? 'Yes' : 'No'}</span></div><div class="summary-row"><span>Connected</span><span>${gp ? 'Yes' : 'No'}</span></div>`;
         }
 
         function updateFooter() {
-            const now = new Date();
-            const pad = n => String(n).padStart(2, '0');
-            document.getElementById('footer-fps').textContent = `${fps} FPS`;
-            document.getElementById('poll-rate').textContent = `${fps} Hz`;
+            const now = new Date(); const pad = n => String(n).padStart(2, '0');
+            document.getElementById('footer-fps').textContent = `${fps} FPS`; document.getElementById('poll-rate').textContent = `${fps} Hz`;
             document.getElementById('footer-time').textContent = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
             document.getElementById('footer-browser').textContent = browserLabel();
         }
 
         function update() {
             syncControllerOverlays();
-            frames++;
-            const now = performance.now();
-            if (now - lastTime > 1000) {
-                fps = frames;
-                frames = 0;
-                lastTime = now;
-                updateFooter();
-            }
+            frames++; const now = performance.now();
+            if (now - lastTime > 1000) { fps = frames; frames = 0; lastTime = now; updateFooter(); }
 
             const gp = getPad();
             if (gp) {
-                if (!connectedOnce) {
-                    connectedOnce = true;
-                    document.getElementById('status-dot').classList.add('on');
-                    document.getElementById('status-text').textContent = gp.id;
-                }
-
-                const ax = gp.axes;
-                const lx = ax[0] || 0, ly = ax[1] || 0, rx = ax[2] || 0, ry = ax[3] || 0;
-
+                if (!connectedOnce) { connectedOnce = true; document.getElementById('status-dot').classList.add('on'); document.getElementById('status-text').textContent = gp.id; }
+                const ax = gp.axes; const lx = ax[0] || 0, ly = ax[1] || 0, rx = ax[2] || 0, ry = ax[3] || 0;
                 updateStick(lx, ly, { dot: 'ls-dot', x: 'ls-x', y: 'ls-y', rad: 'ls-rad', trail: 'ls-trail', wrap: 'ls-wrap' }, lsTrail, 'rgba(0,240,168,1)');
                 updateStick(rx, ry, { dot: 'rs-dot', x: 'rs-x', y: 'rs-y', rad: 'rs-rad', trail: 'rs-trail', wrap: 'rs-wrap' }, rsTrail, 'rgba(25,191,255,1)');
-
-                updateCirc('left', lx, ly);
-                updateCirc('right', rx, ry);
-                renderCircularity();
-
-                const lt = gp.buttons[6]?.value || 0;
-                const rt = gp.buttons[7]?.value || 0;
-                document.getElementById('l2-fill').style.height = `${(lt * 100).toFixed(1)}%`;
-                document.getElementById('l2-val').textContent = `${(lt * 100).toFixed(0)}%`;
-                document.getElementById('r2-fill').style.height = `${(rt * 100).toFixed(1)}%`;
-                document.getElementById('r2-val').textContent = `${(rt * 100).toFixed(0)}%`;
+                updateCirc('left', lx, ly); updateCirc('right', rx, ry); renderCircularity();
+                const lt = gp.buttons[6]?.value || 0; const rt = gp.buttons[7]?.value || 0;
+                document.getElementById('l2-fill').style.height = `${(lt * 100).toFixed(1)}%`; document.getElementById('l2-val').textContent = `${(lt * 100).toFixed(0)}%`;
+                document.getElementById('r2-fill').style.height = `${(rt * 100).toFixed(1)}%`; document.getElementById('r2-val').textContent = `${(rt * 100).toFixed(0)}%`;
 
                 gp.buttons.forEach((btn, i) => {
-                    const def = BTN_DEFS[i];
-                    const chip = document.getElementById('chip-' + i);
+                    const def = BTN_DEFS[i]; const chip = document.getElementById('chip-' + i);
                     if (!def || !chip) return;
-                    const on = btn.pressed || btn.value > .5;
-                    if (on) testedSet.add(i);
+                    const on = btn.pressed || btn.value > .5; if (on) testedSet.add(i);
                     chip.className = 'btn-chip ' + (def.cls || '') + (def.wide ? ' wide' : '') + (on ? ' on' : testedSet.has(i) ? ' tested' : '');
-                    if (def.svg) {
-                        const colors = { a: '#00f0a8', b: '#ff4268', x: '#19bfff', y: '#ffe35a' };
-                        svgHighlight(def.svg, on, colors[def.cls] || '#00f0a8');
-                    }
+                    if (def.svg) { const colors = { a: '#00f0a8', b: '#ff4268', x: '#19bfff', y: '#ffe35a' }; svgHighlight(def.svg, on, colors[def.cls] || '#00f0a8'); }
                 });
-
                 document.getElementById('input-count').textContent = `${testedSet.size} / ${gp.buttons.length} inputs tested`;
-                updateAxisList(gp, lt, rt);
-                updateSummary(gp);
-            } else {
-                updateSummary(null);
-            }
+                updateAxisList(gp, lt, rt); updateSummary(gp);
+            } else { updateSummary(null); }
             requestAnimationFrame(update);
         }
 
         window.addEventListener('gamepadconnected', e => {
-            connectedOnce = true;
-            document.getElementById('status-dot').classList.add('on');
-            document.getElementById('status-text').textContent = e.gamepad.id;
-            if (!started) {
-                started = true;
-                requestAnimationFrame(update);
-            }
+            connectedOnce = true; document.getElementById('status-dot').classList.add('on'); document.getElementById('status-text').textContent = e.gamepad.id;
+            if (!started) { started = true; requestAnimationFrame(update); }
         });
-
         window.addEventListener('gamepaddisconnected', () => {
-            connectedOnce = false;
-            document.getElementById('status-dot').classList.remove('on');
-            document.getElementById('status-text').textContent = 'Controller terputus';
+            connectedOnce = false; document.getElementById('status-dot').classList.remove('on'); document.getElementById('status-text').textContent = 'Controller terputus';
             document.getElementById('input-count').textContent = '0 / 0 inputs tested';
         });
 
-        document.getElementById('history-btn').onclick = e => {
-            historyOn = !historyOn;
-            e.target.classList.toggle('active', historyOn);
-            e.target.textContent = historyOn ? 'History ON' : 'History OFF';
-            if (!historyOn) { lsTrail = []; rsTrail = []; }
-        };
-
-        document.getElementById('clear-path-btn').onclick = () => {
-            lsTrail = [];
-            rsTrail = [];
-        };
-
-        document.getElementById('circ-btn').onclick = e => {
-            circOn = !circOn;
-            e.target.classList.toggle('active', circOn);
-            e.target.textContent = circOn ? 'ON' : 'OFF';
-            renderCircularity();
-        };
+        document.getElementById('history-btn').onclick = e => { historyOn = !historyOn; e.target.classList.toggle('active', historyOn); e.target.textContent = historyOn ? 'History ON' : 'History OFF'; if (!historyOn) { lsTrail = []; rsTrail = []; } };
+        document.getElementById('clear-path-btn').onclick = () => { lsTrail = []; rsTrail = []; };
+        document.getElementById('circ-btn').onclick = e => { circOn = !circOn; e.target.classList.toggle('active', circOn); e.target.textContent = circOn ? 'ON' : 'OFF'; renderCircularity(); };
 
         function stopInfiniteVibration(silent = false) {
-            if (vibTimer) clearInterval(vibTimer);
-            vibTimer = null;
+            if (vibTimer) clearInterval(vibTimer); vibTimer = null;
             const inf = document.getElementById('vib-inf');
-            if (inf) {
-                inf.classList.remove('active');
-                inf.textContent = '∞ Infinite OFF';
-            }
+            if (inf) { inf.classList.remove('active'); inf.textContent = '∞ Infinite OFF'; }
             vibrate(0, 0, 1);
             if (!silent) document.getElementById('vib-status').textContent = 'Status: infinite vibration OFF';
         }
 
-        document.querySelectorAll('.vib').forEach(btn => {
-            btn.onclick = () => {
-                stopInfiniteVibration(true);
-                vibrate(+btn.dataset.weak, +btn.dataset.strong, 650);
-            };
-        });
-
+        document.querySelectorAll('.vib').forEach(btn => { btn.onclick = () => { stopInfiniteVibration(true); vibrate(+btn.dataset.weak, +btn.dataset.strong, 650); }; });
         document.getElementById('vib-inf').onclick = e => {
-            if (vibTimer) {
-                stopInfiniteVibration(false);
-                return;
-            }
-            e.target.classList.add('active');
-            e.target.textContent = '∞ Infinite ON';
-            vibrate(.7, .7, 900);
-            vibTimer = setInterval(() => vibrate(.7, .7, 900), 850);
+            if (vibTimer) { stopInfiniteVibration(false); return; }
+            e.target.classList.add('active'); e.target.textContent = '∞ Infinite ON'; vibrate(.7, .7, 900); vibTimer = setInterval(() => vibrate(.7, .7, 900), 850);
         };
 
-        renderControllerSvg();
-        buildButtons();
-        applyEasyLayoutSettings();
-        setupWindowLayoutEditor();
-        renderCircularity();
-        updateSummary(null);
-        updateFooter();
-        syncControllerOverlays();
-        requestAnimationFrame(update);
+        renderControllerSvg(); buildButtons(); applyEasyLayoutSettings(); renderCircularity(); updateSummary(null); updateFooter(); syncControllerOverlays(); requestAnimationFrame(update);
     </script>
 </body>
 

@@ -269,7 +269,7 @@ void calcOmniKinematics(int stick_x, int stick_y, int stick_z, float gyro_rad) {
         const yOff = -0.0035;
         const corners = [[-posOff, yOff, -posOff], [posOff, yOff, -posOff], [-posOff, yOff, posOff], [posOff, yOff, posOff]];
         const anglesY = [-Math.PI / 4, Math.PI / 4, Math.PI / 4, -Math.PI / 4];
-        const modelPath = 'Web Assets/Roda_Omni_53mm.glb';
+        const modelPath = 'Web_Assets/Roda_Omni_53mm.glb';
 
         corners.forEach((pos, i) => {
             const group = new THREE.Group();
@@ -298,6 +298,7 @@ void calcOmniKinematics(int stick_x, int stick_y, int stick_z, float gyro_rad) {
                     document.getElementById('val-slip').style.color = "#00ff00";
                 }
             }, undefined, function (error) {
+                console.error('GLB load error:', error);
                 document.getElementById('val-slip').innerHTML = `ERROR: Gagal Muat GLB`;
                 document.getElementById('val-slip').style.color = "#ff0000";
             });
