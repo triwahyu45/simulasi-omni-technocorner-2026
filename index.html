@@ -3,55 +3,42 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Technocorner UGM 2026 - Control Center</title>
-    <style>
-        body {
-            background: #1a1a1a;
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        h1 {
-            color: #00ffcc;
-        }
-
-        .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 300px;
-        }
-
-        a {
-            background: #333;
-            color: #fff;
-            padding: 15px;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 8px;
-            border: 1px solid #555;
-            transition: 0.3s;
-        }
-
-        a:hover {
-            background: #007acc;
-            border-color: #005999;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technocorner UGM 2026 - Omni Control</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/home.css">
 </head>
 
 <body>
-    <h1>Omni-Drive Control System</h1>
-    <div class="menu">
-        <a href="simulator.html">🚀 Buka Simulator 3D</a>
-        <a href="stick_test.html">🎮 Test Sensor Stick PS4</a>
-    </div>
+    <main class="home-shell">
+        <section class="profile" aria-label="Profil pembuat">
+            <img src="https://github.com/triwahyu45.png" alt="Foto profil GitHub Tri Wahyu">
+            <div>
+                <h1>Tri Wahyu</h1>
+                <a class="github-link" href="https://github.com/triwahyu45" target="_blank" rel="noopener">
+                    github.com/triwahyu45
+                </a>
+            </div>
+        </section>
+
+        <p class="caption">
+            Web simulasi Transporter Technocorner UGM 2026 untuk monitor robot, diagnostic controller,
+            dan generator kode ESP32.
+        </p>
+
+        <nav class="menu" aria-label="Pilih halaman">
+            <a href="simulator.html">
+                <strong>Simulator</strong>
+                <span>3D track, ESP32 monitor, code generator</span>
+            </a>
+            <a href="stick_test.html">
+                <strong>Stick Test</strong>
+                <span>Gamepad diagnostic dan input monitor</span>
+            </a>
+        </nav>
+
+        <div class="meta">Technocorner UGM 2026 / Omni Drive Control</div>
+    </main>
 </body>
 
 </html>

@@ -1,727 +1,27 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Universal Gamepad Diagnostic - Manual Layout</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700;800&display=swap');
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0
-        }
-
-        :root {
-            --bg: #050a11;
-            --panel: rgba(14, 22, 32, .88);
-            --panel2: rgba(7, 13, 21, .92);
-            --line: #273447;
-            --line2: #35465e;
-            --text: #d7e6f7;
-            --muted: #8aa3bf;
-            --green: #00f0a8;
-            --blue: #19bfff;
-            --red: #ff4268;
-            --yellow: #ffe35a;
-            --white: #f3f7ff;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            min-height: 100%;
-            overflow: hidden;
-        }
-
-        body {
-            height: 100vh;
-            max-height: 100vh;
-            background: radial-gradient(circle at 50% 0%, rgba(30, 45, 65, .82) 0%, rgba(9, 15, 24, .98) 44%, #050911 100%);
-            color: var(--text);
-            font-family: Rajdhani, sans-serif;
-            overflow: hidden;
-            padding: 6px 14px 6px;
-        }
-
-        h1 {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: clamp(16px, 1.25vw, 22px);
-            letter-spacing: .42em;
-            text-align: center;
-            color: #a9bad0;
-            text-transform: uppercase;
-            line-height: 1.05;
-            margin: 0 0 7px;
-        }
-
-        #status-bar {
-            width: min(100%, 1500px);
-            height: 44px;
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 18px;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            background: linear-gradient(180deg, rgba(18, 27, 39, .92), rgba(8, 13, 21, .94));
-            box-shadow: 0 0 34px rgba(0, 0, 0, .45);
-            font: 14px 'Share Tech Mono', monospace;
-            color: #b5cbe4;
-        }
-
-        #status-dot {
-            width: 13px;
-            height: 13px;
-            border-radius: 50%;
-            background: #405066;
-            flex: 0 0 auto;
-        }
-
-        #status-dot.on {
-            background: var(--green);
-            box-shadow: 0 0 16px var(--green)
-        }
-
-        #status-text {
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap
-        }
-
-        #input-count {
-            color: var(--green);
-            font-weight: 800;
-            white-space: nowrap
-        }
-
-        .dashboard {
-            width: min(100%, 1500px);
-            height: calc(100vh - 90px);
-            max-height: calc(100vh - 90px);
-            margin: auto;
-            display: grid;
-            grid-template-columns: minmax(880px, 1fr) 410px;
-            grid-template-rows: minmax(350px, 1fr) 190px 48px;
-            gap: 12px;
-            grid-template-areas:
-                "pad side"
-                "tools side"
-                "footer footer";
-        }
-
-        .pad-area {
-            grid-area: pad;
-            position: relative;
-            min-height: 0;
-            border-radius: 18px;
-            overflow: hidden;
-            background: radial-gradient(circle at 46% 48%, rgba(20, 30, 43, .42), rgba(5, 10, 17, 0) 68%);
-        }
-
-        .controller-stage {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        #controller-svg {
-            position: absolute;
-            height: 84%;
-            width: auto;
-            aspect-ratio: 600 / 400;
-            top: 6.0%;
-            left: 50%;
-            transform: translateX(-50%);
-            transform-origin: center;
-            overflow: visible;
-        }
-
-        .side-panel,
-        .tool-card,
-        .footer-bar {
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            background: linear-gradient(180deg, var(--panel), var(--panel2));
-            box-shadow: 0 18px 44px rgba(0, 0, 0, .32);
-        }
-
-        .side-panel {
-            grid-area: side;
-            padding: 8px 16px 16px 16px;
-            /* bring content a bit higher */
-            overflow: visible;
-            /* allow shadow to show */
-            align-self: start;
-            position: relative;
-            /* move the panel upwards in the layout flow */
-            margin-top: -25px;
-            z-index: 60;
-            /* keep the panel above neighboring elements */
-            box-shadow: 0 22px 48px rgba(0, 0, 0, .42);
-        }
-
-        .section-label,
-        .tool-title {
-            font-family: 'Share Tech Mono', monospace;
-            letter-spacing: .26em;
-            color: #a8bdd4;
-            text-transform: uppercase;
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-
-        .btn-track {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 9px 10px;
-        }
-
-        .btn-chip {
-            height: 40px;
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            background: rgba(7, 15, 24, .72);
-            color: #a7bbd0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 20px;
-            font-weight: 800;
-            transition: .08s ease;
-        }
-
-        .btn-chip.wide {
-            grid-column: 1/span 2;
-            width: 60%;
-            justify-self: center
-        }
-
-        .btn-chip .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #26364c
-        }
-
-        .btn-chip.on {
-            color: var(--green);
-            border-color: rgba(0, 240, 168, .65);
-            background: rgba(0, 42, 30, .42)
-        }
-
-        .btn-chip.on .dot {
-            background: var(--green);
-            box-shadow: 0 0 10px var(--green)
-        }
-
-        .btn-chip.b.on {
-            color: var(--red);
-            border-color: rgba(255, 66, 104, .85);
-            background: rgba(64, 12, 26, .45)
-        }
-
-        .btn-chip.x.on {
-            color: var(--blue);
-            border-color: rgba(25, 191, 255, .85);
-            background: rgba(7, 32, 54, .45)
-        }
-
-        .btn-chip.y.on {
-            color: var(--yellow);
-            border-color: rgba(255, 227, 90, .85);
-            background: rgba(55, 47, 10, .40)
-        }
-
-        .btn-chip.tested:not(.on) {
-            border-color: #42536b;
-            color: #7d95ad
-        }
-
-        .tools-grid {
-            grid-area: tools;
-            display: grid;
-            grid-template-columns: 250px 385px 310px 235px 1fr;
-            gap: 12px;
-            min-height: 0;
-        }
-
-        .tool-card {
-            padding: 16px;
-            overflow: hidden;
-            height: 100%;
-            /* fill the tools grid row */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-
-        .row {
-            display: flex;
-            gap: 9px;
-            align-items: center;
-            flex-wrap: wrap
-        }
-
-        .ui-btn {
-            min-height: 42px;
-            padding: 8px 16px;
-            border: 1px solid var(--line2);
-            border-radius: 10px;
-            background: rgba(7, 14, 23, .86);
-            color: var(--text);
-            font: 800 18px Rajdhani, sans-serif;
-            cursor: pointer;
-            transition: .08s ease;
-        }
-
-        .ui-btn:hover,
-        .ui-btn.active {
-            color: var(--green);
-            border-color: rgba(0, 240, 168, .9);
-            box-shadow: inset 0 0 0 1px rgba(0, 240, 168, .10), 0 0 16px rgba(0, 240, 168, .08);
-        }
-
-        .ui-btn.blue:hover,
-        .ui-btn.blue.active {
-            color: var(--blue);
-            border-color: rgba(25, 191, 255, .9)
-        }
-
-        .metric {
-            margin-top: 10px;
-            font: 13px 'Share Tech Mono', monospace;
-            color: #93a9c2;
-            line-height: 1.65
-        }
-
-        .metric b {
-            color: var(--green)
-        }
-
-        .legend {
-            font: 16px 'Share Tech Mono', monospace;
-            color: #bfd3e9;
-            line-height: 2.35
-        }
-
-        .legend i {
-            display: inline-block;
-            width: 25px;
-            height: 3px;
-            margin-right: 12px;
-            vertical-align: middle
-        }
-
-        .l-green {
-            background: var(--green)
-        }
-
-        .l-blue {
-            background: var(--blue)
-        }
-
-        .mini-circ-wrap {
-            display: flex;
-            gap: 18px
-        }
-
-        .mini-circ {
-            width: 158px;
-            text-align: center;
-            font: 14px 'Share Tech Mono', monospace;
-            color: #b9cde4;
-        }
-
-        .mini-circ canvas {
-            width: 124px;
-            height: 124px;
-            border-radius: 50%;
-            display: block;
-            margin: 0 auto
-        }
-
-        .mini-circ b {
-            font-size: 22px;
-            color: var(--green)
-        }
-
-        .mini-circ.right b {
-            color: var(--blue)
-        }
-
-        .axis-list,
-        .summary-list {
-            font: 15px 'Share Tech Mono', monospace;
-            color: #c7d9ee;
-            line-height: 1.5;
-        }
-
-        /* keep Input Summary visually the same vertical size as Circularity Test */
-        .summary-list {
-            min-height: 164px;
-            overflow: auto;
-        }
-
-        .axis-row,
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px
-        }
-
-        .axis-row span:first-child,
-        .summary-row span:first-child {
-            color: #9cb4ce
-        }
-
-        .axis-row span:last-child,
-        .summary-row span:last-child {
-            color: var(--green)
-        }
-
-        .axis-row.r span:last-child {
-            color: var(--blue)
-        }
-
-        .poll-box {
-            margin-top: 14px;
-            border: 1px solid var(--line2);
-            border-radius: 10px;
-            padding: 9px 12px;
-            display: flex;
-            justify-content: space-between;
-            font: 13px 'Share Tech Mono', monospace;
-            color: #a9bdd5;
-        }
-
-        .poll-box b {
-            color: var(--green)
-        }
-
-        .footer-bar {
-            grid-area: footer;
-            border-radius: 6px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            align-items: center;
-            padding: 0 22px;
-            font: 40px 'Share Tech Mono', monospace;
-            color: #9cb4ce;
-            margin-top: 5px;
-            /* nudge footer slightly lower */
-        }
-
-        .footer-bar span:nth-child(2) {
-            text-align: center
-        }
-
-        .footer-bar span:nth-child(3) {
-            text-align: right
-        }
-
-        .footer-bar b {
-            color: var(--green)
-        }
-
-        .trigger-zone {
-            position: absolute;
-            width: 48px;
-            text-align: center;
-            font-family: 'Share Tech Mono', monospace;
-            color: #a8c2de;
-            font-size: 16px;
-            font-weight: 800;
-            z-index: 8;
-        }
-
-        .trigger-zone.left {
-            left: 42px;
-            top: 55px
-        }
-
-        .trigger-zone.right {
-            right: 42px;
-            top: 55px
-        }
-
-        .trigger-track {
-            height: 150px;
-            width: 23px;
-            margin: 8px auto 6px;
-            border: 1px solid var(--line2);
-            border-radius: 999px;
-            background: #071018;
-            overflow: hidden;
-            display: flex;
-            align-items: flex-end;
-            padding: 2px;
-        }
-
-        .trigger-fill {
-            width: 100%;
-            height: 0%;
-            border-radius: 999px;
-            background: var(--green);
-            box-shadow: 0 0 14px var(--green);
-            transition: height .03s
-        }
-
-        .trigger-fill.r {
-            background: var(--blue);
-            box-shadow: 0 0 14px var(--blue)
-        }
-
-        .trigger-val {
-            color: var(--green);
-            font-size: 15px
-        }
-
-        .trigger-val.r {
-            color: var(--blue)
-        }
-
-        .stick-overlay {
-            position: absolute;
-            width: 84px;
-            z-index: 10;
-            transform: translate(-50%, -50%);
-        }
-
-        .stick-overlay.left {
-            left: 24.0%;
-            top: 39.0%
-        }
-
-        .stick-overlay.right {
-            left: 58.1%;
-            top: 58.0%
-        }
-
-        .stick-ring {
-            width: 84px;
-            height: 84px;
-            border-radius: 50%;
-            border: 2px solid #27384d;
-            background: radial-gradient(circle at 50% 50%, #091520 0%, #050b12 100%);
-            position: relative;
-            overflow: hidden;
-            box-shadow: inset 0 0 20px #000, 0 0 0 7px rgba(17, 27, 38, .78);
-        }
-
-        .stick-crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 82%;
-            height: 1px;
-            background: #26384d;
-            z-index: 0;
-        }
-
-        .stick-crosshair.v {
-            width: 1px;
-            height: 82%
-        }
-
-        canvas.trail,
-        canvas.circ-canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%
-        }
-
-        canvas.circ-canvas {
-            z-index: 1;
-            display: none
-        }
-
-        canvas.trail {
-            z-index: 2
-        }
-
-        .stick-dot {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            left: calc(50% - 5px);
-            top: calc(50% - 5px);
-            background: var(--green);
-            box-shadow: 0 0 18px var(--green);
-            z-index: 4;
-            transition: transform .02s;
-        }
-
-        .stick-dot.r {
-            background: var(--blue);
-            box-shadow: 0 0 18px var(--blue)
-        }
-
-        .avg-error {
-            position: absolute;
-            inset: 0;
-            z-index: 5;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            pointer-events: none;
-            font: 800 17px Rajdhani, sans-serif;
-            line-height: .95;
-            color: #fff;
-            text-shadow: 0 2px 8px #000;
-        }
-
-        .avg-error small {
-            display: block;
-            font: 800 8px 'Share Tech Mono', monospace;
-            color: rgba(255, 255, 255, .82)
-        }
-
-        .avg-error.on {
-            display: flex
-        }
-
-        .stick-info {
-            position: absolute;
-            top: 100px;
-            width: 170px;
-            font: 15px 'Share Tech Mono', monospace;
-            color: #d5e6fb;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-
-        .stick-overlay.left .stick-info {
-            left: -90px;
-            text-align: left
-        }
-
-        .stick-overlay.right .stick-info {
-            left: 50px;
-            top: 0px;
-            text-align: right
-        }
-
-        .stick-info .lab {
-            color: var(--green);
-            font-weight: 800
-        }
-
-        .stick-overlay.right .stick-info .lab {
-            color: var(--blue)
-        }
-
-        .drift-badge {
-            display: none
-        }
-
-        .stick-active .stick-ring {
-            border-color: var(--green)
-        }
-
-        .stick-active.r .stick-ring {
-            border-color: var(--blue)
-        }
-
-        .layout-hint {
-            display: none;
-            color: var(--green);
-            font-size: 11px;
-            margin-left: 8px;
-        }
-
-        @media(max-width:1250px) {
-            body {
-                overflow: auto
-            }
-
-            .dashboard {
-                grid-template-columns: 1fr;
-                grid-template-rows: 470px auto auto 34px;
-                grid-template-areas: "pad" "side" "tools" "footer";
-            }
-
-            .side-panel {
-                max-width: 760px;
-                width: 100%;
-                margin: auto
-            }
-
-            .tools-grid {
-                grid-template-columns: repeat(2, minmax(240px, 1fr))
-            }
-        }
-
-        @media(max-height:820px) and (min-width:1251px) {
-            body {
-                padding-top: 4px
-            }
-
-            h1 {
-                font-size: 20px;
-                margin-bottom: 5px
-            }
-
-            #status-bar {
-                height: 40px;
-                margin-bottom: 20px
-            }
-
-            .dashboard {
-                grid-template-rows: minmax(340px, 1fr) 180px 48px;
-                gap: 9px
-            }
-
-            .tool-card {
-                padding: 13px
-            }
-
-            .btn-chip {
-                height: 36px;
-                font-size: 18px
-            }
-
-            .mini-circ canvas {
-                width: 108px;
-                height: 108px
-            }
-
-            .ui-btn {
-                min-height: 38px;
-                font-size: 17px
-            }
-
-            .trigger-track {
-                height: 128px
-            }
-
-            .stick-info {
-                font-size: 0px
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/stick-test.css">
+    
 </head>
 
 <body>
+    <nav class="app-nav" aria-label="Navigasi halaman">
+        <a href="index.html">HOME</a>
+        <a href="simulator.html">SIMULATOR</a>
+        <a class="active" href="stick_test.html">STICK TEST</a>
+    </nav>
+
     <h1>Xbox Gamepad Diagnostic</h1>
 
     <div id="status-bar">
         <div id="status-dot"></div>
-        <span id="status-text">Menunggu controller — colok USB / Bluetooth, lalu tekan tombol apa pun</span>
+        <span id="status-text">Menunggu controller â€” colok USB / Bluetooth, lalu tekan tombol apa pun</span>
         <span id="input-count">0 / 0 inputs tested</span>
     </div>
 
@@ -782,7 +82,7 @@
                         <canvas class="trail" id="ls-trail" width="84" height="84"></canvas>
                         <div class="stick-dot" id="ls-dot"></div>
                         <div class="avg-error" id="ls-avg">
-                            <div><small>AVG ERROR</small><span>—</span></div>
+                            <div><small>AVG ERROR</small><span>â€”</span></div>
                         </div>
                     </div>
                     <div class="stick-info">
@@ -801,7 +101,7 @@
                         <canvas class="trail" id="rs-trail" width="84" height="84"></canvas>
                         <div class="stick-dot r" id="rs-dot"></div>
                         <div class="avg-error" id="rs-avg">
-                            <div><small>AVG ERROR</small><span>—</span></div>
+                            <div><small>AVG ERROR</small><span>â€”</span></div>
                         </div>
                     </div>
                     <div class="stick-info">
@@ -837,16 +137,16 @@
                     <div class="mini-circ">
                         <canvas id="mini-l" width="128" height="128"></canvas>
                         <div>LEFT STICK</div>
-                        <div>Avg Error: <b id="mini-l-err">—</b></div>
-                        <div>Coverage: <span id="mini-l-cov">—</span></div>
-                        <div>Samples: <span id="mini-l-samples">—</span></div>
+                        <div>Avg Error: <b id="mini-l-err">â€”</b></div>
+                        <div>Coverage: <span id="mini-l-cov">â€”</span></div>
+                        <div>Samples: <span id="mini-l-samples">â€”</span></div>
                     </div>
                     <div class="mini-circ right">
                         <canvas id="mini-r" width="128" height="128"></canvas>
                         <div>RIGHT STICK</div>
-                        <div>Avg Error: <b id="mini-r-err">—</b></div>
-                        <div>Coverage: <span id="mini-r-cov">—</span></div>
-                        <div>Samples: <span id="mini-r-samples">—</span></div>
+                        <div>Avg Error: <b id="mini-r-err">â€”</b></div>
+                        <div>Coverage: <span id="mini-r-cov">â€”</span></div>
+                        <div>Samples: <span id="mini-r-samples">â€”</span></div>
                     </div>
                 </div>
             </div>
@@ -857,7 +157,7 @@
                     <button class="ui-btn vib" data-weak="0.25" data-strong="0.10">Soft</button>
                     <button class="ui-btn vib" data-weak="0.45" data-strong="0.55">Hard</button>
                     <button class="ui-btn vib blue" data-weak="1" data-strong="1">Full</button>
-                    <button class="ui-btn blue" id="vib-inf" style="width:100%;">∞ Infinite OFF</button>
+                    <button class="ui-btn blue" id="vib-inf" style="width:100%;">âˆž Infinite OFF</button>
                 </div>
                 <div class="metric" id="vib-status">* Requires gamepad vibration support</div>
             </div>
@@ -870,14 +170,14 @@
             <div class="tool-card">
                 <div class="tool-title">Input Summary</div>
                 <div class="summary-list" id="summary-list"></div>
-                <div class="poll-box"><span>Polling Rate</span><b id="poll-rate">— Hz</b></div>
+                <div class="poll-box"><span>Polling Rate</span><b id="poll-rate">â€” Hz</b></div>
             </div>
         </section>
 
         <div class="footer-bar">
-            <span>Update Rate: <b id="footer-fps">— FPS</b></span>
-            <span>Timestamp: <b id="footer-time">—</b></span>
-            <span>Browser: <b id="footer-browser">—</b></span>
+            <span>Update Rate: <b id="footer-fps">â€” FPS</b></span>
+            <span>Timestamp: <b id="footer-time">â€”</b></span>
+            <span>Browser: <b id="footer-browser">â€”</b></span>
         </div>
     </main>
 
@@ -891,15 +191,15 @@
             { n: 'RB', svg: 'rb-shape' },
             { n: 'LT', svg: 'lt-shape' },
             { n: 'RT', svg: 'rt-shape' },
-            { n: '▣ View', svg: 'view-btn' },
-            { n: '☰ Menu', svg: 'menu-btn' },
-            { n: 'Ⓛ LS' },
-            { n: 'Ⓡ RS' },
-            { n: '↑ D-Up', svg: 'dpad-up' },
-            { n: '↓ D-Down', svg: 'dpad-dn' },
-            { n: '← D-Left', svg: 'dpad-lt' },
-            { n: '→ D-Right', svg: 'dpad-rt' },
-            { n: '◖ Xbox', svg: 'xbox-btn', wide: true }
+            { n: 'â–£ View', svg: 'view-btn' },
+            { n: 'â˜° Menu', svg: 'menu-btn' },
+            { n: 'â“ LS' },
+            { n: 'â“‡ RS' },
+            { n: 'â†‘ D-Up', svg: 'dpad-up' },
+            { n: 'â†“ D-Down', svg: 'dpad-dn' },
+            { n: 'â† D-Left', svg: 'dpad-lt' },
+            { n: 'â†’ D-Right', svg: 'dpad-rt' },
+            { n: 'â—– Xbox', svg: 'xbox-btn', wide: true }
         ];
 
         const PAD_LAYOUT = {
@@ -1007,9 +307,9 @@
         // ==========================================================
         const UI_BOX_LAYOUT = {
             global: {
-                dx: -35,
+                dx: 0,
                 dy: 0,
-                scale: 0.94,
+                scale: 1,
                 gap: 10,
                 titleFontSize: 12,
                 textFontSize: 11,
@@ -1024,24 +324,24 @@
             },
 
             buttonPanel: {
-                dx: -260,
-                dy: 12,
+                dx: -24,
+                dy: 0,
                 scale: 1,
-                width: 275,
-                height: 336,
+                width: 300,
+                height: 350,
                 titleFontSize: 12,
                 buttonFontSize: 13,
-                chipHeight: 27,
+                chipHeight: 28,
                 chipGapX: 10,
-                chipGapY: 5,
+                chipGapY: 6,
                 padding: 12
             },
 
             toolsGrid: {
-                dx: 120,
+                dx: 0,
                 dy: 0,
                 scale: 1,
-                rowHeight: 180,
+                rowHeight: 188,
                 gap: 9
             },
 
@@ -1050,8 +350,8 @@
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 178,
-                    height: 155,
+                    width: 180,
+                    height: 184,
                     fontSize: 11,
                     titleFontSize: 12,
                     buttonFontSize: 11,
@@ -1063,8 +363,8 @@
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 350,
-                    height: 190,
+                    width: 320,
+                    height: 184,
                     fontSize: 10,
                     titleFontSize: 12,
                     buttonFontSize: 10,
@@ -1077,8 +377,8 @@
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 190,
-                    height: 145,
+                    width: 205,
+                    height: 184,
                     fontSize: 10,
                     titleFontSize: 12,
                     buttonFontSize: 11,
@@ -1091,7 +391,7 @@
                     dy: 0,
                     scale: 1,
                     width: 170,
-                    height: 150,
+                    height: 184,
                     fontSize: 11,
                     titleFontSize: 12,
                     buttonFontSize: 11,
@@ -1102,8 +402,8 @@
                     dx: 0,
                     dy: 0,
                     scale: 1,
-                    width: 205,
-                    height: 150,
+                    width: 230,
+                    height: 184,
                     fontSize: 11,
                     titleFontSize: 12,
                     buttonFontSize: 11,
@@ -1114,9 +414,9 @@
 
             footer: {
                 dx: 0,
-                dy: 0,
-                height: 28,
-                fontSize: 11
+                dy: 2,
+                height: 34,
+                fontSize: 12
             }
         };
 
@@ -1317,8 +617,8 @@
                 dashboard.style.gap = `${g.gap}px`;
                 dashboard.style.gridTemplateColumns = `minmax(880px, 1fr) ${UI_BOX_LAYOUT.buttonPanel.width}px`;
                 dashboard.style.gridTemplateRows = `minmax(0, 1fr) ${UI_BOX_LAYOUT.toolsGrid.rowHeight}px ${UI_BOX_LAYOUT.footer.height}px`;
-                dashboard.style.height = `calc(100vh - 104px)`;
-                dashboard.style.maxHeight = `calc(100vh - 104px)`;
+                dashboard.style.height = `calc(100vh - 96px)`;
+                dashboard.style.maxHeight = `calc(100vh - 96px)`;
                 dashboard.style.transform = `translate(${g.dx}px, ${g.dy}px) scale(${g.scale})`;
                 dashboard.style.transformOrigin = 'top center';
             }
@@ -1366,7 +666,7 @@
                     card.style.width = `${cfg.width}px`;
                     card.style.height = `${cfg.height}px`;
                     card.style.padding = `${cfg.padding}px`;
-                    card.style.overflow = 'hidden';
+                    card.style.overflow = 'auto';
                     card.style.alignSelf = 'start';
 
                     const title = card.querySelector('.tool-title');
@@ -1544,19 +844,19 @@
 
         function renderCircularity() {
             const left = calcCirc(circData.left), right = calcCirc(circData.right);
-            document.querySelector('#ls-avg span').textContent = left.samples ? left.err.toFixed(1) + '%' : '—';
-            document.querySelector('#rs-avg span').textContent = right.samples ? right.err.toFixed(1) + '%' : '—';
+            document.querySelector('#ls-avg span').textContent = left.samples ? left.err.toFixed(1) + '%' : 'â€”';
+            document.querySelector('#rs-avg span').textContent = right.samples ? right.err.toFixed(1) + '%' : 'â€”';
             document.getElementById('ls-avg').classList.toggle('on', circOn); document.getElementById('rs-avg').classList.toggle('on', circOn);
             document.getElementById('ls-circ').style.display = circOn ? 'block' : 'none'; document.getElementById('rs-circ').style.display = circOn ? 'block' : 'none';
 
             drawCircCanvas('ls-circ', circData.left, 'rgba(0,240,168,1)', STICK_SIZE); drawCircCanvas('rs-circ', circData.right, 'rgba(25,191,255,1)', STICK_SIZE);
             drawCircCanvas('mini-l', circData.left, 'rgba(0,240,168,1)', 128); drawCircCanvas('mini-r', circData.right, 'rgba(25,191,255,1)', 128);
 
-            document.getElementById('mini-l-err').textContent = left.samples ? left.err.toFixed(1) + '%' : '—';
-            document.getElementById('mini-r-err').textContent = right.samples ? right.err.toFixed(1) + '%' : '—';
-            document.getElementById('mini-l-cov').textContent = left.samples ? left.cov.toFixed(1) + '%' : '—';
-            document.getElementById('mini-r-cov').textContent = right.samples ? right.cov.toFixed(1) + '%' : '—';
-            document.getElementById('mini-l-samples').textContent = left.samples || '—'; document.getElementById('mini-r-samples').textContent = right.samples || '—';
+            document.getElementById('mini-l-err').textContent = left.samples ? left.err.toFixed(1) + '%' : 'â€”';
+            document.getElementById('mini-r-err').textContent = right.samples ? right.err.toFixed(1) + '%' : 'â€”';
+            document.getElementById('mini-l-cov').textContent = left.samples ? left.cov.toFixed(1) + '%' : 'â€”';
+            document.getElementById('mini-r-cov').textContent = right.samples ? right.cov.toFixed(1) + '%' : 'â€”';
+            document.getElementById('mini-l-samples').textContent = left.samples || 'â€”'; document.getElementById('mini-r-samples').textContent = right.samples || 'â€”';
         }
 
         function updateCirc(name, ax, ay) {
@@ -1644,7 +944,7 @@
         function stopInfiniteVibration(silent = false) {
             if (vibTimer) clearInterval(vibTimer); vibTimer = null;
             const inf = document.getElementById('vib-inf');
-            if (inf) { inf.classList.remove('active'); inf.textContent = '∞ Infinite OFF'; }
+            if (inf) { inf.classList.remove('active'); inf.textContent = 'âˆž Infinite OFF'; }
             vibrate(0, 0, 1);
             if (!silent) document.getElementById('vib-status').textContent = 'Status: infinite vibration OFF';
         }
@@ -1652,7 +952,7 @@
         document.querySelectorAll('.vib').forEach(btn => { btn.onclick = () => { stopInfiniteVibration(true); vibrate(+btn.dataset.weak, +btn.dataset.strong, 650); }; });
         document.getElementById('vib-inf').onclick = e => {
             if (vibTimer) { stopInfiniteVibration(false); return; }
-            e.target.classList.add('active'); e.target.textContent = '∞ Infinite ON'; vibrate(.7, .7, 900); vibTimer = setInterval(() => vibrate(.7, .7, 900), 850);
+            e.target.classList.add('active'); e.target.textContent = 'âˆž Infinite ON'; vibrate(.7, .7, 900); vibTimer = setInterval(() => vibrate(.7, .7, 900), 850);
         };
 
         renderControllerSvg(); buildButtons(); applyEasyLayoutSettings(); renderCircularity(); updateSummary(null); updateFooter(); syncControllerOverlays(); requestAnimationFrame(update);
@@ -1660,3 +960,4 @@
 </body>
 
 </html>
+

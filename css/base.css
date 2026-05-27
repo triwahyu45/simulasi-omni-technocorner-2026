@@ -1,0 +1,62 @@
+:root {
+    --tc-bg: #070b12;
+    --tc-panel: rgba(10, 18, 28, .78);
+    --tc-panel-strong: rgba(13, 24, 36, .92);
+    --tc-line: rgba(129, 170, 205, .22);
+    --tc-line-active: rgba(51, 246, 184, .62);
+    --tc-text: #e7f3ff;
+    --tc-muted: #8fa8bd;
+    --tc-cyan: #18c8ff;
+    --tc-green: #33f6b8;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.app-nav {
+    position: fixed;
+    top: 10px;
+    right: 14px;
+    z-index: 2000;
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+    border: 1px solid var(--tc-line);
+    border-radius: 999px;
+    background: rgba(5, 10, 17, .76);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .34);
+    backdrop-filter: blur(12px);
+}
+
+.app-nav a {
+    min-height: 28px;
+    padding: 0 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--tc-muted);
+    text-decoration: none;
+    font: 800 12px "Segoe UI", Arial, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.app-nav a:hover,
+.app-nav a.active {
+    color: var(--tc-text);
+    border-color: var(--tc-line-active);
+    background: rgba(51, 246, 184, .10);
+}
+
+@media (max-width: 720px) {
+    .app-nav {
+        top: 8px;
+        right: 8px;
+        left: 8px;
+        justify-content: center;
+    }
+}

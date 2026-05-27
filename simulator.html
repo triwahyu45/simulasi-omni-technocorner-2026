@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -6,653 +6,51 @@
     <title>ESP32 WiFi Transporter TC 2026 Monitor</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
-    <style>
-        :root {
-            --bg: #0b1320;
-            /* deep space */
-            --panel: #071021;
-            --accent: #00d1ff;
-            /* holo blue */
-            --accent-2: #32ffb1;
-            /* teal/teagreen */
-            --muted: #1b2430;
-            --glass: rgba(4, 8, 15, 0.6);
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            display: block;
-            height: 100vh;
-            font-family: 'Courier New', monospace;
-            background: var(--bg);
-            color: #ffffff;
-            overflow: hidden;
-        }
-
-        #left-panel {
-            width: min(520px, 42vw);
-            min-width: 260px;
-            max-width: 75vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid rgba(0, 209, 255, 0.22);
-            z-index: 80;
-            transition: width 0.08s, opacity 0.12s;
-            position: absolute;
-            left: 0;
-            top: 0;
-            background: rgba(4, 9, 17, 0.90);
-            backdrop-filter: blur(8px);
-            box-shadow: 18px 0 42px rgba(0, 0, 0, 0.45);
-        }
-
-        #resizer {
-            position: absolute;
-            top: 39px;
-            right: -5px;
-            width: 10px;
-            height: calc(100vh - 39px);
-            cursor: ew-resize;
-            background: linear-gradient(90deg, transparent, rgba(0, 209, 255, .42), transparent);
-            z-index: 40;
-            pointer-events: auto;
-        }
-
-        #resizer:hover {
-            background: linear-gradient(90deg, transparent, rgba(50, 255, 177, .9), transparent);
-        }
-
-        body.resizing-editor {
-            cursor: ew-resize;
-            user-select: none;
-        }
-
-        #right-panel {
-            width: 100%;
-            height: 100vh;
-            position: relative;
-            transition: none;
-        }
-
-        .header {
-            background: linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.05));
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border-bottom: 1px solid rgba(0, 209, 255, 0.07);
-            color: var(--accent);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) inset;
-        }
-
-        /* Draggable editor cursor */
-        #left-panel .header {
-            cursor: grab;
-        }
-
-        #left-panel.dragging .header {
-            cursor: grabbing;
-        }
-
-        .CodeMirror {
-            flex-grow: 1;
-            height: 100%;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        /* CodeMirror rainbow tokens for clearer function/keyword distinction */
-        .CodeMirror {
-            background: rgba(0, 0, 0, 0.45) !important;
-        }
-
-        .CodeMirror pre {
-            color: #ffffff;
-        }
-
-        .CodeMirror .cm-keyword {
-            color: #ff6b6b;
-        }
-
-        .CodeMirror .cm-def {
-            color: #ffd166;
-        }
-
-        .CodeMirror .cm-variable {
-            color: #9be15d;
-        }
-
-        .CodeMirror .cm-number {
-            color: #f7d794;
-        }
-
-        .CodeMirror .cm-string {
-            color: #7bdff2;
-        }
-
-        .CodeMirror .cm-comment {
-            color: #6c757d;
-            font-style: italic;
-        }
-
-        .CodeMirror .cm-builtin,
-        .CodeMirror .cm-atom {
-            color: #c792ea;
-        }
-
-        #canva-container {
-            width: 100%;
-            height: calc(100vh - 40px);
-            display: block;
-        }
-
-        #status-overlay {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: min(430px, calc(100% - 24px));
-            max-height: calc(100vh - 70px);
-            overflow: auto;
-            background: rgba(3, 8, 15, 0.72);
-            padding: 13px;
-            border-radius: 12px;
-            font-family: monospace;
-            color: #ffffff;
-            pointer-events: none;
-            border: 1px solid rgba(0, 209, 255, 0.24);
-            backdrop-filter: blur(6px);
-            z-index: 20;
-            transition: opacity 0.3s;
-            box-shadow: 0 8px 30px rgba(3, 8, 20, 0.6);
-        }
-
-        /* Ensure overlay text is white on transparent black */
-        #status-overlay .data-display {
-            color: #ffffff !important;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 5px;
-        }
-
-        .ui-btn {
-            background: linear-gradient(180deg, var(--muted), rgba(0, 0, 0, 0.2));
-            color: #001018;
-            border: 1px solid rgba(0, 209, 255, 0.12);
-            padding: 6px 12px;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            pointer-events: auto;
-            color: #e9ffff;
-            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
-        }
-
-        .ui-btn:hover {
-            filter: brightness(1.05) saturate(1.1);
-        }
-
-        #reset-view-btn {
-            background: linear-gradient(90deg, var(--accent), var(--accent-2));
-            border-color: rgba(0, 209, 255, 0.4);
-            color: #001018;
-        }
-
-        #reset-view-btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .data-display {
-            margin-top: 8px;
-            font-size: 12px;
-            border-top: 1px dashed rgba(50, 255, 177, .55);
-            padding-top: 6px;
-            line-height: 1.45;
-        }
-
-        .monitor-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px 10px;
-        }
-
-        .monitor-grid span:nth-child(odd) {
-            color: #9db6c9;
-        }
-
-        .monitor-grid span:nth-child(even) {
-            text-align: right;
-            color: #ffffff;
-        }
-
-        .blocked {
-            color: #ff5757 !important;
-            font-weight: bold;
-        }
-
-        .safe {
-            color: #32ffb1 !important;
-            font-weight: bold;
-        }
-
-        /* ===== PROPER MONITOR BOX UI ===== */
-        .btn-group {
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: flex-end;
-        }
-
-        .esp-url-input {
-            width: 180px;
-            height: 30px;
-            border: 1px solid rgba(0, 209, 255, 0.28);
-            border-radius: 7px;
-            background: rgba(0, 0, 0, 0.35);
-            color: #e9ffff;
-            font: 700 12px 'Courier New', monospace;
-            padding: 0 9px;
-            outline: none;
-        }
-
-        .esp-url-input:focus {
-            border-color: var(--accent-2);
-            box-shadow: 0 0 14px rgba(50, 255, 177, .18);
-        }
-
-        #status-overlay.monitor-panel {
-            width: min(510px, calc(100% - 24px));
-            max-height: calc(100vh - 64px);
-            overflow: auto;
-            padding: 12px;
-            pointer-events: none;
-            background:
-                linear-gradient(180deg, rgba(5, 13, 24, .88), rgba(3, 7, 13, .78));
-            border: 1px solid rgba(0, 209, 255, .28);
-            border-radius: 16px;
-            box-shadow: 0 18px 42px rgba(0, 0, 0, .58), inset 0 0 0 1px rgba(255, 255, 255, .035);
-        }
-
-        .monitor-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-
-        .monitor-kicker {
-            color: var(--accent);
-            font-size: 11px;
-            letter-spacing: .16em;
-            font-weight: 900;
-        }
-
-        #gp-status {
-            display: block;
-            margin-top: 2px;
-            color: #ffcf64;
-            font-size: 13px;
-            line-height: 1.25;
-        }
-
-        .status-pill {
-            min-width: 92px;
-            text-align: center;
-            border-radius: 999px;
-            padding: 8px 10px;
-            font-weight: 900;
-            font-size: 12px;
-            letter-spacing: .05em;
-            border: 1px solid currentColor;
-            background: rgba(255, 255, 255, .04);
-        }
-
-        .safe {
-            color: var(--accent-2) !important;
-        }
-
-        .blocked {
-            color: #ff5a72 !important;
-        }
-
-        .monitor-card {
-            border: 1px solid rgba(0, 209, 255, .18);
-            border-radius: 13px;
-            background: linear-gradient(180deg, rgba(10, 22, 36, .82), rgba(4, 10, 18, .72));
-            padding: 11px;
-            margin-top: 9px;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .025);
-        }
-
-        .primary-card {
-            border-color: rgba(50, 255, 177, .24);
-        }
-
-        .card-title {
-            color: #9ec9dc;
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .status-line {
-            display: grid;
-            grid-template-columns: 92px minmax(0, 1fr);
-            align-items: center;
-            gap: 10px;
-            padding: 5px 0;
-            border-top: 1px solid rgba(255, 255, 255, .045);
-        }
-
-        .status-line:first-of-type {
-            border-top: 0;
-        }
-
-        .status-line span {
-            color: #89a8bd;
-            font-size: 12px;
-        }
-
-        .status-line strong {
-            color: #fff;
-            font-size: 14px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .command-value {
-            font-size: 22px;
-            font-weight: 900;
-            color: #ffffff;
-            line-height: 1.1;
-        }
-
-        .sub-value {
-            margin-top: 5px;
-            color: var(--accent);
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-        .sensor-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
-        .sensor-tile {
-            border: 1px solid rgba(255, 255, 255, .08);
-            background: rgba(0, 0, 0, .22);
-            border-radius: 11px;
-            padding: 9px 6px;
-            text-align: center;
-        }
-
-        .sensor-tile span {
-            display: block;
-            color: #8da9bd;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: .08em;
-        }
-
-        .sensor-tile b {
-            display: block;
-            margin-top: 3px;
-            color: #ffffff;
-            font-size: 22px;
-            line-height: 1;
-        }
-
-        .sensor-tile b.danger {
-            color: #ff5a72 !important;
-            text-shadow: 0 0 12px rgba(255, 90, 114, .38);
-        }
-
-        .sensor-tile b.ok {
-            color: #ffffff !important;
-        }
-
-        .sensor-tile small {
-            color: #6f8ca2;
-            font-size: 10px;
-        }
-
-        .monitor-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 9px;
-        }
-
-        .compact-card {
-            min-height: 118px;
-        }
-
-        .quad-grid {
-            display: grid;
-            grid-template-columns: 32px 1fr 32px 1fr;
-            gap: 7px 9px;
-            align-items: center;
-            font-size: 14px;
-        }
-
-        .quad-grid.three-row {
-            grid-template-columns: 34px 1fr;
-        }
-
-        .quad-grid span {
-            color: #89a8bd;
-            font-weight: 900;
-        }
-
-        .quad-grid b {
-            color: #ffffff;
-            font-size: 16px;
-            text-align: right;
-        }
-
-        .slip-value {
-            font-size: 20px;
-            font-weight: 900;
-            color: var(--accent-2);
-            line-height: 1.2;
-        }
-
-
-
-        /* ===== COMPACT MONITOR + ROBOT MOUSE TEST ===== */
-        #status-overlay.monitor-panel {
-            width: min(490px, calc(100% - 24px));
-            padding: 10px;
-        }
-
-        .monitor-top {
-            margin-bottom: 7px;
-        }
-
-        .monitor-card {
-            padding: 9px;
-            margin-top: 7px;
-        }
-
-        .card-title {
-            margin-bottom: 6px;
-            font-size: 11px;
-        }
-
-        .status-line {
-            padding: 3px 0;
-            grid-template-columns: 82px minmax(0, 1fr);
-        }
-
-        .status-line span {
-            font-size: 11px;
-        }
-
-        .status-line strong {
-            font-size: 13px;
-        }
-
-        .command-value {
-            font-size: 19px;
-        }
-
-        .sub-value {
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        .sensor-grid {
-            gap: 6px;
-        }
-
-        .sensor-tile {
-            padding: 7px 5px;
-        }
-
-        .sensor-tile b {
-            font-size: 19px;
-        }
-
-        .monitor-row {
-            gap: 7px;
-            align-items: start;
-            margin-top: 0;
-        }
-
-        .compact-card {
-            min-height: 0;
-        }
-
-        .quad-grid {
-            gap: 4px 8px;
-            font-size: 12px;
-        }
-
-        .quad-grid b {
-            font-size: 14px;
-        }
-
-        .slip-value {
-            font-size: 16px;
-            line-height: 1.15;
-        }
-
-        .pid-strip {
-            display: grid;
-            grid-template-columns: 48px 1fr 54px 1fr;
-            gap: 5px 9px;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, .06);
-            align-items: center;
-        }
-
-        .pid-strip span {
-            color: #89a8bd;
-            font-size: 11px;
-            font-weight: 900;
-        }
-
-        .pid-strip b {
-            color: #fff;
-            font-size: 13px;
-            text-align: right;
-        }
-
-        .robot-mouse-hint {
-            margin-top: 6px;
-            color: #8fb2c9;
-            font-size: 10px;
-            line-height: 1.25;
-        }
-
-        .pid-tune-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            margin-top: 7px;
-            pointer-events: auto;
-        }
-
-        .pid-tune-grid label {
-            display: grid;
-            grid-template-columns: 24px 1fr;
-            align-items: center;
-            gap: 5px;
-            color: #89a8bd;
-            font-size: 11px;
-            font-weight: 900;
-        }
-
-        .pid-tune-grid input {
-            min-width: 0;
-            height: 24px;
-            border-radius: 7px;
-            border: 1px solid rgba(0, 209, 255, .22);
-            background: rgba(0, 0, 0, .32);
-            color: #ffffff;
-            font: 800 12px 'Courier New', monospace;
-            padding: 0 6px;
-            outline: none;
-        }
-
-        .pid-tune-grid input:focus {
-            border-color: var(--accent-2);
-            box-shadow: 0 0 12px rgba(50, 255, 177, .16);
-        }
-
-        .ui-btn.active-toggle {
-            color: #001018;
-            background: linear-gradient(90deg, var(--accent), var(--accent-2));
-            border-color: rgba(50, 255, 177, .55);
-        }
-
-        #canva-container.robot-manip-active canvas {
-            cursor: grab;
-        }
-
-        #canva-container.robot-manip-active canvas:active {
-            cursor: grabbing;
-        }
-
-        @media (max-width: 900px) {
-            #status-overlay.monitor-panel {
-                width: min(430px, calc(100% - 16px));
-            }
-
-            .sensor-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .monitor-row {
-                grid-template-columns: 1fr;
-            }
-
-            .command-value {
-                font-size: 18px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/simulator.css">
+    
 </head>
 
 <body>
+    <nav class="app-nav" aria-label="Navigasi halaman">
+        <a href="index.html">Home</a>
+        <a class="active" href="simulator.html">Simulator</a>
+        <a href="stick_test.html">Stick Test</a>
+    </nav>
 
     <div id="left-panel">
         <div class="header">
-            <span>ESP32 WiFi Endpoint</span>
-            <span style="color: #888; font-size: 11px;">Copy-Paste Reference</span>
+            <span>ESP32 Code Generator</span>
+            <span style="color: #888; font-size: 11px;">Monitor WiFi .ino</span>
         </div>
         <div id="resizer" title="Resize editor"></div>
+        <div class="generator-panel">
+            <div class="generator-grid">
+                <label class="generator-field wide">SSID
+                    <input id="gen-ssid" value="NAMA_HOTSPOT_LAPTOP" autocomplete="off">
+                </label>
+                <label class="generator-field wide">Password
+                    <input id="gen-password" value="PASSWORD_HOTSPOT" autocomplete="off">
+                </label>
+                <label class="generator-field">Kp
+                    <input id="gen-kp" type="number" step="0.01" value="1.65">
+                </label>
+                <label class="generator-field">Ki
+                    <input id="gen-ki" type="number" step="0.001" value="0.00">
+                </label>
+                <label class="generator-field">Kd
+                    <input id="gen-kd" type="number" step="0.01" value="0.32">
+                </label>
+                <label class="generator-field">File
+                    <input id="gen-filename" value="transporter_tc2026_monitor" autocomplete="off">
+                </label>
+            </div>
+            <div class="generator-actions">
+                <button id="copy-code-btn" class="ui-btn" type="button">COPY CODE</button>
+                <button id="download-code-btn" class="ui-btn" type="button">DOWNLOAD .INO</button>
+            </div>
+            <div id="generator-status" class="generator-status">Preview ready.</div>
+        </div>
         <textarea id="cpp-editor">
 /*
  * ESP32 WIFI TETHERING MONITOR ENDPOINT
@@ -856,10 +254,10 @@ void loop() {
             <div class="monitor-card">
                 <div class="card-title">Input Command</div>
                 <div id="val-input" class="command-value">X:0.00 | Y:0.00 | Turn:0.00</div>
-                <div id="val-actual" class="sub-value">Gerak X:0.00 | Y:0.00 | Gyro:0°</div>
+                <div id="val-actual" class="sub-value">Gerak X:0.00 | Y:0.00 | Gyro:0Â°</div>
                 <div class="pid-strip">
-                    <span>Yaw</span><b id="pid-current">0°</b>
-                    <span>Target</span><b id="pid-target">0°</b>
+                    <span>Yaw</span><b id="pid-current">0Â°</b>
+                    <span>Target</span><b id="pid-target">0Â°</b>
                     <span>PID</span><b id="pid-out">0.00</b>
                     <span>Mouse</span><b id="mouse-state">OFF</b>
                 </div>
@@ -947,6 +345,9 @@ void loop() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
 
     <script>
+        // Array global untuk dideteksi oleh Raycaster gravitasi (Y-Axis)
+        const floorObjects = [];
+
         // 1. Inisialisasi UI Toggles & Editor
         const leftPanel = document.getElementById('left-panel');
         const rightPanel = document.getElementById('right-panel');
@@ -958,7 +359,6 @@ void loop() {
             lineNumbers: true, mode: "text/x-c++src", theme: "monokai", readOnly: true
         });
 
-        // Make the left editor panel draggable by dragging its header (visual transform only)
         (function enableEditorDrag() {
             const panel = leftPanel;
             const hdr = panel.querySelector('.header');
@@ -969,7 +369,6 @@ void loop() {
             hdr.addEventListener('mousedown', (e) => {
                 dragging = true; panel.classList.add('dragging');
                 start.x = e.clientX; start.y = e.clientY;
-                // read existing transform translate
                 const m = panel.style.transform.match(/translate\((-?\d+)px,\s*(-?\d+)px\)/);
                 if (m) { offset.x = parseInt(m[1]); offset.y = parseInt(m[2]); } else { offset.x = 0; offset.y = 0; }
                 e.preventDefault();
@@ -981,30 +380,13 @@ void loop() {
                 panel.style.transform = `translate(${dx}px, ${dy}px)`;
             });
             window.addEventListener('mouseup', () => { if (dragging) { dragging = false; panel.classList.remove('dragging'); } });
-
-            // touch support
-            hdr.addEventListener('touchstart', (ev) => {
-                const t = ev.touches[0]; dragging = true; panel.classList.add('dragging'); start.x = t.clientX; start.y = t.clientY;
-                const m = panel.style.transform.match(/translate\((-?\d+)px,\s*(-?\d+)px\)/);
-                if (m) { offset.x = parseInt(m[1]); offset.y = parseInt(m[2]); } else { offset.x = 0; offset.y = 0; }
-                ev.preventDefault();
-            });
-            window.addEventListener('touchmove', (ev) => { if (!dragging) return; const t = ev.touches[0]; const dx = t.clientX - start.x + offset.x; const dy = t.clientY - start.y + offset.y; panel.style.transform = `translate(${dx}px, ${dy}px)`; });
-            window.addEventListener('touchend', () => { if (dragging) { dragging = false; panel.classList.remove('dragging'); } });
         })();
 
-        // Resize editor panel with mouse/touch by dragging the thin vertical handle.
         (function enableEditorResize() {
             const resizer = document.getElementById('resizer');
-            const minW = 260;
-            const maxRatio = 0.76;
-            let resizing = false;
+            const minW = 260; const maxRatio = 0.76; let resizing = false;
 
-            const startResize = (clientX) => {
-                resizing = true;
-                document.body.classList.add('resizing-editor');
-            };
-
+            const startResize = (clientX) => { resizing = true; document.body.classList.add('resizing-editor'); };
             const moveResize = (clientX) => {
                 if (!resizing) return;
                 const maxW = Math.round(window.innerWidth * maxRatio);
@@ -1013,30 +395,11 @@ void loop() {
                 resizeCanvas();
                 if (editor && editor.refresh) editor.refresh();
             };
+            const stopResize = () => { resizing = false; document.body.classList.remove('resizing-editor'); };
 
-            const stopResize = () => {
-                resizing = false;
-                document.body.classList.remove('resizing-editor');
-            };
-
-            resizer.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                startResize(e.clientX);
-            });
+            resizer.addEventListener('mousedown', (e) => { e.preventDefault(); startResize(e.clientX); });
             window.addEventListener('mousemove', (e) => moveResize(e.clientX));
             window.addEventListener('mouseup', stopResize);
-
-            resizer.addEventListener('touchstart', (e) => {
-                const t = e.touches[0];
-                if (!t) return;
-                e.preventDefault();
-                startResize(t.clientX);
-            }, { passive: false });
-            window.addEventListener('touchmove', (e) => {
-                const t = e.touches[0];
-                if (t) moveResize(t.clientX);
-            }, { passive: false });
-            window.addEventListener('touchend', stopResize);
         })();
 
         // 2. Setup Three.js
@@ -1045,7 +408,8 @@ void loop() {
         scene.background = new THREE.Color(0x050b12);
 
         const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.01, 100);
-        camera.position.set(0, 3.15, 2.75);
+        // Kamera ditempatkan di belakang START (+Z), menghadap lurus ke lapangan FINISH (-Z)
+        camera.position.set(0, 2.8, 2.6);
         camera.lookAt(0, 0, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -1060,103 +424,52 @@ void loop() {
         directionalLight.position.set(5, 10, 5); scene.add(directionalLight);
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-        // Larger grid for expanded arena
         const arenaSize = 3.0; // meters
         const arenaDiv = 60;
-        const grid = new THREE.GridHelper(arenaSize, arenaDiv, 0x00d1ff, 0x061522);
-        grid.material.opacity = 0.32; grid.material.transparent = true;
+        const grid = new THREE.GridHelper(arenaSize, arenaDiv, 0x000000, 0x000000);
+        grid.material.opacity = 0.15; grid.material.transparent = true;
         scene.add(grid);
 
-        // Container for objects that ToF should detect
         const tofObjects = [];
 
-        // Create maze arena. Every wall is added to tofObjects so VL53L0X/raycast can detect it.
-        // Track Transporter TC 2026.
-        // Skala mengikuti PDF: arena 300 cm x 300 cm -> 3.0 m x 3.0 m di simulator.
-        // Koordinat di bawah pakai cm dari PDF:
-        // x = kiri ke kanan, y = atas ke bawah. Helper cmX/cmZ otomatis ubah ke koordinat Three.js.
         function createArena() {
-            // ==========================================================
-            // TRANSPORTER TC 2026 TRACK - GUIDEBOOK SAFE VERSION
-            // ----------------------------------------------------------
-            // Penting:
-            // - Garis dimensi pada PDF TIDAK dijadikan tembok.
-            // - Garis hitam di lantai hanya dibuat sebagai floor marking,
-            //   bukan obstacle dan tidak masuk tofObjects.
-            // - Yang menjadi obstacle sensor hanya border luar + box fisik.
-            // - Box warna = 10 x 10 x 10 cm.
-            // - Drop zone = 12 x 12 x 5 cm, divisualkan sebagai pad/tray.
-            // - Area abu-abu = tanjakan/ramp 5 cm, bukan tembok.
-            // ==========================================================
             const cm = 0.01;
+            // Translasi: START di bawah layar dekat kamera (Z positif). FINISH jauh di atas (Z negatif).
             const cmX = (x) => (x - 150) * cm;
-            const cmZ = (y) => (y - 150) * cm;
+            const cmZ = (y) => (150 - y) * cm;
 
             const fieldMat = new THREE.MeshPhongMaterial({
-                // Dark mode floor, bukan putih seperti layout PDF.
-                color: 0x07111c,
-                emissive: 0x001522,
-                emissiveIntensity: 0.38,
-                shininess: 18
+                color: 0xe0e0e0, emissive: 0x111111, shininess: 10
+            });
+            const wallMat = new THREE.MeshPhongMaterial({
+                color: 0x1a1a1a, emissive: 0x000000, shininess: 20
             });
             const borderMat = new THREE.MeshPhongMaterial({
-                color: 0x071018,
-                emissive: 0x003a4a,
-                emissiveIntensity: 0.45,
-                shininess: 16
+                color: 0x000000, emissive: 0x000000, shininess: 30
             });
-            const markingMat = new THREE.MeshBasicMaterial({
-                color: 0x2ee6ff,
-                transparent: true,
-                opacity: 0.46,
-                side: THREE.DoubleSide
-            });
-            const dimensionHintMat = new THREE.MeshBasicMaterial({
-                color: 0x00d1ff,
-                transparent: true,
-                opacity: 0.10,
-                side: THREE.DoubleSide
-            });
-            const startMat = new THREE.MeshBasicMaterial({ color: 0x16ff70, transparent: true, opacity: 0.88, side: THREE.DoubleSide });
-            const finishMat = new THREE.MeshBasicMaterial({ color: 0x10c9e8, transparent: true, opacity: 0.88, side: THREE.DoubleSide });
-            const rampDarkMat = new THREE.MeshPhongMaterial({ color: 0x1b2329, emissive: 0x07131a, emissiveIntensity: 0.34, shininess: 10 });
-            const rampLightMat = new THREE.MeshPhongMaterial({ color: 0x2a343a, emissive: 0x0b1c24, emissiveIntensity: 0.30, shininess: 10 });
+            const startMat = new THREE.MeshBasicMaterial({ color: 0x1efc89, transparent: true, opacity: 0.92, side: THREE.DoubleSide });
+            const finishMat = new THREE.MeshBasicMaterial({ color: 0x1fb8ff, transparent: true, opacity: 0.92, side: THREE.DoubleSide });
+            const rampLightMat = new THREE.MeshPhongMaterial({ color: 0x999999, shininess: 15, side: THREE.DoubleSide });
+            const topFloorMat = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 10 });
 
             const colors = {
-                orange: { hex: 0xffaa19, emissive: 0x442400 },
-                blue: { hex: 0x2426d9, emissive: 0x080045 },
-                pink: { hex: 0xe767e6, emissive: 0x40003f },
-                purple: { hex: 0xb916c7, emissive: 0x380035 },
-                yellow: { hex: 0xf5ee18, emissive: 0x363300 },
-                red: { hex: 0xff2948, emissive: 0x3e0008 }
+                orange: { hex: 0xffaa19 }, blue: { hex: 0x2426d9 }, pink: { hex: 0xe767e6 },
+                purple: { hex: 0xb916c7 }, yellow: { hex: 0xf5ee18 }, red: { hex: 0xff2948 }
             };
 
             function makeMat(c, opacity = 1, basic = false) {
-                if (basic) {
-                    return new THREE.MeshBasicMaterial({ color: c.hex ?? c, transparent: opacity < 1, opacity, side: THREE.DoubleSide });
-                }
-                return new THREE.MeshPhongMaterial({
-                    color: c.hex ?? c,
-                    emissive: c.emissive ?? 0x000000,
-                    emissiveIntensity: 0.34,
-                    transparent: opacity < 1,
-                    opacity,
-                    shininess: 24
-                });
+                if (basic) return new THREE.MeshBasicMaterial({ color: c.hex ?? c, transparent: opacity < 1, opacity, side: THREE.DoubleSide });
+                return new THREE.MeshPhongMaterial({ color: c.hex ?? c, emissive: 0x222222, transparent: opacity < 1, opacity, shininess: 24 });
             }
 
-            function addTrackLabel(text, xCm, yCm, color = '#32ffb1', scaleX = 0.24, scaleY = 0.06, yM = 0.035) {
+            function addTrackLabel(text, xCm, yCm, color = '#222222', scaleX = 0.22, scaleY = 0.055, yM = 0.045) {
                 const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 128;
+                canvas.width = 512; canvas.height = 128;
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.font = '900 48px Courier New';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillStyle = color;
-                ctx.shadowColor = '#001018';
-                ctx.shadowBlur = 16;
                 ctx.fillText(text, 256, 64);
                 const texture = new THREE.CanvasTexture(canvas);
                 const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
@@ -1167,78 +480,65 @@ void loop() {
                 return sprite;
             }
 
-            function addPlaneCm(xCm, yCm, wCm, hCm, mat, name = 'track-plane', yM = 0.003) {
+            function addPlaneCm(xCm, yCm, wCm, hCm, mat, name = 'track-plane', yM = 0.001) {
                 const g = new THREE.PlaneGeometry(wCm * cm, hCm * cm);
                 const m = new THREE.Mesh(g, mat);
                 m.rotation.x = -Math.PI / 2;
                 m.position.set(cmX(xCm), yM, cmZ(yCm));
                 m.name = name;
                 scene.add(m);
+                floorObjects.push(m);
                 return m;
             }
 
-            function addBoxCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'track-box', detectable = false) {
+            function addBoxCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'track-box', detectable = false, isFloor = false) {
                 const g = new THREE.BoxGeometry(wCm * cm, heightM, hCm * cm);
                 const m = new THREE.Mesh(g, mat);
                 m.position.set(cmX(xCm), heightM / 2, cmZ(yCm));
                 m.name = name;
                 scene.add(m);
                 if (detectable) tofObjects.push(m);
+                if (isFloor) floorObjects.push(m);
                 return m;
             }
 
-            function addLineCm(x1, y1, x2, y2, mat = markingMat, name = 'floor-marking', thickCm = 1.7, yM = 0.006) {
-                // Floor marking only. TIDAK masuk tofObjects, jadi bukan tembok.
-                const dx = (x2 - x1) * cm;
-                const dz = (y2 - y1) * cm;
+            function addRaisedPlatformCm(xCm, yCm, wCm, hCm, topHeightM, mat, name = 'raised-platform') {
+                return addBoxCm(xCm, yCm, wCm, hCm, topHeightM, mat, name, false, true);
+            }
+
+            function addWallLineCm(x1, y1, x2, y2, name = 'inner-wall', thickCm = 2.4, heightM = 0.08, mat = wallMat) {
+                const dx = (x2 - x1) * cm; const dz = (y2 - y1) * cm;
                 const length = Math.max(Math.hypot(dx, dz), thickCm * cm);
-                const g = new THREE.PlaneGeometry(length, thickCm * cm);
+                const g = new THREE.BoxGeometry(length, heightM, thickCm * cm);
                 const m = new THREE.Mesh(g, mat);
-                m.rotation.x = -Math.PI / 2;
-                m.rotation.z = Math.atan2(dz, dx);
-                m.position.set(cmX((x1 + x2) / 2), yM, cmZ((y1 + y2) / 2));
-                m.name = name;
-                scene.add(m);
-                return m;
-            }
-
-            function addBorderLineCm(x1, y1, x2, y2, name = 'arena-border') {
-                // Border luar arena dibuat fisik tipis supaya robot tidak keluar arena.
-                const dx = (x2 - x1) * cm;
-                const dz = (y2 - y1) * cm;
-                const length = Math.max(Math.hypot(dx, dz), 0.03);
-                const g = new THREE.BoxGeometry(length, 0.035, 0.025);
-                const m = new THREE.Mesh(g, borderMat);
-                m.position.set(cmX((x1 + x2) / 2), 0.0175, cmZ((y1 + y2) / 2));
-                m.rotation.y = -Math.atan2(dz, dx);
+                m.position.set(cmX((x1 + x2) / 2), heightM / 2, cmZ((y1 + y2) / 2));
+                // Rotasi disesuaikan dengan pemetaan koordinat baru
+                m.rotation.y = Math.atan2(-dz, dx);
                 m.name = name;
                 scene.add(m);
                 tofObjects.push(m);
                 return m;
             }
 
-            function addRampWedgeCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'ramp-wedge', direction = 'south') {
-                // Wedge ramp dengan side-view segitiga siku-siku.
-                // direction south: sisi atas (y kecil) rendah, sisi bawah (y besar) tinggi.
-                const w = wCm * cm;
-                const d = hCm * cm;
+            function addRampWedgeCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'ramp-wedge', direction = 'high_z0') {
+                const w = wCm * cm; const d = hCm * cm;
                 const x0 = -w / 2, x1 = w / 2;
                 const z0 = -d / 2, z1 = d / 2;
-                let hNorth = 0;
-                let hSouth = heightM;
-                if (direction === 'north') [hNorth, hSouth] = [heightM, 0];
+
+                let heights = { nw: 0, ne: 0, se: 0, sw: 0 };
+                if (direction === 'high_z0') { heights.nw = heightM; heights.ne = heightM; }
+                else if (direction === 'high_z1') { heights.sw = heightM; heights.se = heightM; }
+                else if (direction === 'high_x0') { heights.nw = heightM; heights.sw = heightM; }
+                else if (direction === 'high_x1') { heights.ne = heightM; heights.se = heightM; }
 
                 const verts = new Float32Array([
                     x0, 0, z0, x1, 0, z0, x1, 0, z1, x0, 0, z1,
-                    x0, hNorth, z0, x1, hNorth, z0, x1, hSouth, z1, x0, hSouth, z1
+                    x0, heights.nw, z0, x1, heights.ne, z0, x1, heights.se, z1, x0, heights.sw, z1
                 ]);
                 const indices = [
-                    0, 2, 1, 0, 3, 2,        // bottom
-                    4, 5, 6, 4, 6, 7,        // sloped top
-                    0, 1, 5, 0, 5, 4,        // north side
-                    3, 7, 6, 3, 6, 2,        // south side
-                    0, 4, 7, 0, 7, 3,        // left side
-                    1, 2, 6, 1, 6, 5         // right side
+                    0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7,
+                    0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5,
+                    2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
                 ];
                 const g = new THREE.BufferGeometry();
                 g.setAttribute('position', new THREE.BufferAttribute(verts, 3));
@@ -1248,146 +548,107 @@ void loop() {
                 m.position.set(cmX(xCm), 0, cmZ(yCm));
                 m.name = name;
                 scene.add(m);
+                floorObjects.push(m);
                 return m;
             }
 
             function addDropZoneAndBox(colorKey, xCm, yCm, label, isObstacle = false) {
                 const c = colors[colorKey];
-                // Drop zone = 12 x 12 x 5 cm. Dibuat sebagai tray/pad rendah, bukan tembok lintasan.
-                addBoxCm(xCm, yCm, 12, 12, 0.05, makeMat(c, 0.28), `${label}-dropzone-12x12x5cm`, false);
-                // Box = 10 x 10 x 10 cm. Ini benda fisik dan masuk tofObjects.
-                const box = addBoxCm(xCm, yCm, 10, 10, 0.10, makeMat(c, 1), `${label}-box-10x10x10cm`, true);
+                const box = addBoxCm(xCm, yCm, 10, 10, 0.10, makeMat(c, 1), `${label}-box-10x10x10cm`, true, false);
                 box.userData.isTransporterBox = true;
                 box.userData.colorKey = colorKey;
                 box.userData.isObstacleBox = isObstacle;
-                addTrackLabel(label.toUpperCase(), xCm, yCm, '#d9fbff', 0.11, 0.032, 0.135);
                 return box;
             }
 
-            // Arena floor 300 cm x 300 cm.
-            addPlaneCm(150, 150, 300, 300, fieldMat, 'arena-floor-300x300cm', 0.001);
+            // Lantai Lapangan
+            addPlaneCm(150, 150, 300, 300, fieldMat, 'arena-floor', 0.001);
 
-            // Border luar saja yang dianggap physical wall.
-            addBorderLineCm(0, 0, 300, 0, 'outer-top');
-            addBorderLineCm(300, 0, 300, 300, 'outer-right');
-            addBorderLineCm(300, 300, 0, 300, 'outer-bottom');
-            addBorderLineCm(0, 300, 0, 0, 'outer-left');
+            // Tembok Luar
+            addWallLineCm(0, 0, 300, 0, 'outer-top', 3.0, 0.08, borderMat);
+            addWallLineCm(300, 0, 300, 300, 'outer-right', 3.0, 0.08, borderMat);
+            addWallLineCm(300, 300, 0, 300, 'outer-bottom', 3.0, 0.08, borderMat);
+            addWallLineCm(0, 300, 0, 0, 'outer-left', 3.0, 0.08, borderMat);
 
-            // START / FINISH area, 25 cm x 25 cm sesuai diagram.
+            // START (Kamera ada di +Z, jadi START diposisikan di dekatnya)
             addPlaneCm(150, 12.5, 25, 25, startMat, 'start-pad-25x25cm', 0.008);
-            addTrackLabel('START', 150, 12.5, '#001018', 0.20, 0.05, 0.045);
-            addPlaneCm(150, 287.5, 25, 25, finishMat, 'finish-pad-25x25cm', 0.008);
-            addTrackLabel('FINISH', 150, 287.5, '#001018', 0.22, 0.05, 0.045);
+            addTrackLabel('START', 150, 12.5, '#001018', 0.20, 0.05, 0.015);
 
-            // Tanjakan/ramp: semua area abu-abu divisualkan sebagai permukaan miring.
-            // Tinggi ramp = 5 cm. Tidak dimasukkan sebagai tofObjects supaya sensor tidak menganggapnya tembok.
-            addRampWedgeCm(150, 150, 35, 100, 0.05, rampDarkMat, 'main-dark-ramp-35x100cm', 'south');
-            addRampWedgeCm(125, 160, 35, 50, 0.05, rampLightMat, 'left-grey-ramp-35x50cm', 'south');
-            addRampWedgeCm(185, 148, 35, 35, 0.05, rampLightMat, 'right-grey-ramp-35x35cm', 'south');
-            addRampWedgeCm(150, 100, 35, 25, 0.05, rampLightMat, 'upper-grey-ramp-35x25cm', 'south');
-            addRampWedgeCm(150, 216, 35, 12, 0.05, rampLightMat, 'lower-grey-ramp-35x12cm', 'north');
-            addTrackLabel('RAMP 5 cm', 150, 150, '#9ec9dc', 0.22, 0.045, 0.12);
+            // FINISH PAD: Dibuat sebagai lantai yang ditinggikan (RaisedPlatform 5cm)
+            addRaisedPlatformCm(150, 287.5, 25, 25, 0.05, finishMat, 'finish-pad-elevated');
+            addTrackLabel('FINISH', 150, 287.5, '#001018', 0.22, 0.05, 0.055);
+            // Tanjakan FINISH (Mulai dari dasar menuju Pad tinggi 5cm)
+            addRampWedgeCm(150, 269, 25, 12, 0.05, rampLightMat, 'finish-ramp', 'high_z0');
 
-            // Visual guide lines from the diagram. Ini FLOOR MARKING saja, bukan tembok.
-            const guideLines = [
-                // kiri atas
-                [15, 25, 35, 25], [15, 25, 15, 50], [15, 50, 55, 50], [55, 50, 55, 120],
-                [55, 120, 125, 120], [55, 145, 115, 145], [55, 120, 55, 145],
-                [82, 80, 110, 80], [110, 80, 110, 120], [0, 90, 30, 90],
-                [55, 50, 115, 50], [115, 25, 115, 50], [82, 25, 115, 25],
-                // kiri tengah-bawah
-                [0, 160, 35, 160], [35, 145, 55, 145], [0, 200, 35, 200],
-                [15, 220, 120, 220], [15, 220, 15, 285], [15, 285, 105, 285],
-                [15, 245, 65, 245], [65, 245, 65, 260], [75, 200, 115, 200],
-                [115, 145, 115, 220], [115, 145, 135, 145],
-                // finish lane marking
-                [105, 285, 116, 274], [125, 270, 150, 270], [150, 270, 150, 300],
-                [163, 263, 163, 300], [150, 263, 163, 263],
-                // sekitar ramp
-                [100, 130, 135, 130], [100, 130, 100, 205], [100, 205, 115, 205],
-                [170, 130, 205, 130], [205, 130, 205, 165], [170, 165, 205, 165],
-                // kanan atas
-                [160, 45, 175, 60], [175, 60, 240, 60], [175, 60, 175, 130],
-                [205, 90, 235, 90], [235, 90, 235, 120], [205, 120, 235, 120],
-                [260, 0, 260, 25], [260, 25, 285, 25],
-                // kanan tengah
-                [175, 130, 255, 130], [175, 165, 245, 165], [175, 165, 175, 280],
-                [255, 130, 265, 120], [264, 125, 288, 149], [245, 165, 255, 172],
-                // kanan bawah
-                [205, 200, 255, 200], [255, 200, 255, 275], [205, 275, 255, 275],
-                [230, 200, 230, 220], [230, 245, 230, 275], [255, 225, 300, 225], [255, 250, 300, 250]
+            // Platform Tertinggi Tengah & Ekstrusi Ramp Ke Luar
+            addRaisedPlatformCm(150, 150, 35, 100, 0.05, topFloorMat, 'center-top-platform');
+            addRampWedgeCm(116.25, 150, 32.5, 50, 0.05, rampLightMat, 'left-light-ramp', 'high_x1');
+            addRampWedgeCm(183.75, 150, 32.5, 50, 0.05, rampLightMat, 'right-light-ramp', 'high_x0');
+            addRampWedgeCm(150, 94, 35, 12, 0.05, rampLightMat, 'upper-light-ramp', 'high_z0');
+            addRampWedgeCm(150, 206, 35, 12, 0.05, rampLightMat, 'lower-light-ramp', 'high_z1');
+
+            // Tembok Maze Lapangan
+            const wallLines = [
+                // Kiri Atas
+                [20, 25, 85, 25], [40, 25, 40, 90], [0, 90, 40, 90], [85, 25, 85, 50],
+                [85, 50, 132.5, 50], [60, 95, 90, 95], [60, 95, 60, 140], [60, 140, 110, 140],
+                [110, 115, 110, 140], [60, 120, 80, 120],
+                // Kanan Atas
+                [260, 0, 260, 25], [260, 25, 300, 25], [170, 30, 195, 55], [195, 55, 195, 120],
+                [195, 55, 260, 55], [195, 120, 245, 120], [245, 80, 245, 120], [220, 80, 245, 80],
+                [250, 130, 280, 100], [195, 120, 195, 160], [195, 160, 250, 160], [250, 160, 280, 190],
+                // Kiri Bawah
+                [0, 175, 50, 175], [60, 195, 100, 195], [100, 160, 100, 205], [100, 205, 120, 205],
+                [50, 210, 50, 260], [50, 210, 100, 210], [100, 210, 100, 240], [50, 260, 130, 260],
+                [100, 280, 130, 260], [20, 280, 100, 280], [20, 230, 20, 280], [20, 230, 60, 230],
+                // Kanan Bawah
+                [180, 280, 250, 280], [250, 240, 250, 280], [230, 240, 250, 240], [190, 210, 190, 280],
+                [190, 210, 250, 210], [250, 190, 250, 210], [210, 180, 250, 180], [210, 180, 210, 200],
+                [280, 130, 300, 110], [280, 160, 300, 140]
             ];
-            guideLines.forEach((l, idx) => addLineCm(...l, markingMat, `guide-floor-line-${idx}`, 1.45, 0.007));
+            wallLines.forEach((l, idx) => addWallLineCm(...l, `inner-wall-${idx}`, 2.4, 0.08, wallMat));
 
-            // Dimensional hints tipis/transparan. Ini hanya visual reminder ukuran, bukan obstacle.
-            addLineCm(0, 300, 300, 300, dimensionHintMat, 'dimension-300cm-x', 0.9, 0.010);
-            addLineCm(300, 0, 300, 300, dimensionHintMat, 'dimension-300cm-y', 0.9, 0.010);
-
-            // Box warna + drop zone. Posisi mengikuti perkiraan center pada diagram PDF.
-            // Penyisihan/32 besar memakai jingga, pink, biru tua. Babak lanjut menambah ungu/kuning.
-            addDropZoneAndBox('orange', 78, 98, 'orange');
-            addDropZoneAndBox('blue', 196, 170, 'blue');
-            addDropZoneAndBox('pink', 284, 14, 'pink');
+            addDropZoneAndBox('orange', 75, 72, 'orange');
+            addDropZoneAndBox('blue', 175, 175, 'blue');
+            addDropZoneAndBox('pink', 280, 20, 'pink');
             addDropZoneAndBox('purple', 35, 255, 'purple');
-            addDropZoneAndBox('yellow', 276, 246, 'yellow');
-
-            // Obstacle merah untuk babak 8 besar ke atas. Default visual saja, bisa dipindah/dihapus sesuai babak.
-            const red1 = addBoxCm(92, 138, 10, 10, 0.10, makeMat(colors.red), 'red-obstacle-box-a', true);
-            const red2 = addBoxCm(258, 143, 10, 10, 0.10, makeMat(colors.red), 'red-obstacle-box-b', true);
-            red1.userData.isObstacleBox = true;
-            red2.userData.isObstacleBox = true;
-            addTrackLabel('OBST', 92, 138, '#ffffff', 0.10, 0.03, 0.135);
-            addTrackLabel('OBST', 258, 143, '#ffffff', 0.10, 0.03, 0.135);
-
-            // Judul dan ukuran penting.
-            addTrackLabel('TRACK TRANSPORTER TC 2026', 150, -9, '#9ec9dc', 0.70, 0.08, 0.045);
-            addTrackLabel('ARENA 300 x 300 cm', 150, 307, '#9ec9dc', 0.36, 0.045, 0.045);
-            addTrackLabel('BOX 10cm | DROP ZONE 12cm | RAMP 5cm', 70, 307, '#9ec9dc', 0.46, 0.042, 0.045);
+            addDropZoneAndBox('yellow', 270, 240, 'yellow');
         }
-
         createArena();
 
         const robot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.015, 0.1), new THREE.MeshPhongMaterial({ color: 0x444444 }));
-        robot.position.set(0, 0.03, -1.375);
-        robot.rotation.y = Math.PI; // start menghadap ke arah finish seperti layout PDF.
+
+        // START Posisi. Karena kamera ada di Z positif dan FINISH ada di Z negatif, 
+        // rotasi Y=0 berarti robot sudah lurus menghadap FINISH (-Z axis).
+        robot.position.set(0, 0.03, 1.375);
+        robot.rotation.y = 0;
         scene.add(robot);
 
-        // FRONT MARKER: panah cyan di sisi depan robot. Pada simulator ini arah depan = local -Z.
         const frontMark = new THREE.Group();
         const arrowBody = new THREE.Mesh(
             new THREE.BoxGeometry(0.014, 0.006, 0.055),
             new THREE.MeshPhongMaterial({ color: 0x00ffcc, emissive: 0x00d1ff, emissiveIntensity: 0.9 })
         );
         arrowBody.position.set(0, 0.012, -0.025);
-
         const arrowHead = new THREE.Mesh(
             new THREE.ConeGeometry(0.025, 0.045, 3),
             new THREE.MeshPhongMaterial({ color: 0x32ffb1, emissive: 0x32ffb1, emissiveIntensity: 0.8 })
         );
         arrowHead.position.set(0, 0.014, -0.070);
         arrowHead.rotation.x = -Math.PI / 2;
-
-        frontMark.add(arrowBody);
-        frontMark.add(arrowHead);
+        frontMark.add(arrowBody); frontMark.add(arrowHead);
         robot.add(frontMark);
 
         function makeTextSprite(text, color = '#32ffb1') {
             const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 64;
-            const ctx = canvas.getContext('2d');
+            canvas.width = 256; canvas.height = 64; const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = 'bold 34px Courier New';
-            ctx.fillStyle = color;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#001018';
-            ctx.shadowBlur = 10;
+            ctx.font = 'bold 34px Courier New'; ctx.fillStyle = color;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(text, 128, 32);
             const texture = new THREE.CanvasTexture(canvas);
             const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
-            const sprite = new THREE.Sprite(mat);
-            sprite.scale.set(0.16, 0.04, 1);
+            const sprite = new THREE.Sprite(mat); sprite.scale.set(0.16, 0.04, 1);
             return sprite;
         }
 
@@ -1395,73 +656,34 @@ void loop() {
         frontLabel.position.set(0, 0.09, -0.105);
         robot.add(frontLabel);
 
-        // Make robot materials neon-ish to match theme
         robot.material.emissive = new THREE.Color(0x003a4a);
         robot.material.emissiveIntensity = 0.6;
 
+        const tofMax = 2000;
+        const sensors = { front: { mm: tofMax + 1 }, right: { mm: tofMax + 1 }, back: { mm: tofMax + 1 }, left: { mm: tofMax + 1 }, minAvoidMm: 120 };
+        const rayFront = new THREE.Raycaster(); const rayRight = new THREE.Raycaster(); const rayBack = new THREE.Raycaster(); const rayLeft = new THREE.Raycaster();
 
-        // Raycasters and simulated VL53L0X sensors (front/right/back/left)
-        const tofMax = 2000; // mm
-        const sensors = {
-            front: { mm: tofMax + 1 },
-            right: { mm: tofMax + 1 },
-            back: { mm: tofMax + 1 },
-            left: { mm: tofMax + 1 },
-            minAvoidMm: 120
-        };
-
-        const rayFront = new THREE.Raycaster();
-        const rayRight = new THREE.Raycaster();
-        const rayBack = new THREE.Raycaster();
-        const rayLeft = new THREE.Raycaster();
-
-        // create small 3D markers for each sensor on the robot
         function createSensorMeshes() {
             const coneGeom = new THREE.ConeGeometry(0.008, 0.02, 8);
             const mat = new THREE.MeshBasicMaterial({ color: 0x00d1ff, opacity: 0.95, transparent: true });
-
-            const sFront = new THREE.Mesh(coneGeom, mat.clone());
-            sFront.position.set(0, 0.03, -0.06);
-            sFront.rotation.x = Math.PI; // point forward
-            robot.add(sFront);
-
-            const sBack = new THREE.Mesh(coneGeom, mat.clone());
-            sBack.position.set(0, 0.03, 0.06);
-            // back points backward (default)
-            robot.add(sBack);
-
-            const sRight = new THREE.Mesh(coneGeom, mat.clone());
-            sRight.position.set(0.06, 0.03, 0);
-            sRight.rotation.z = -Math.PI / 2;
-            robot.add(sRight);
-
-            const sLeft = new THREE.Mesh(coneGeom, mat.clone());
-            sLeft.position.set(-0.06, 0.03, 0);
-            sLeft.rotation.z = Math.PI / 2;
-            robot.add(sLeft);
+            const sFront = new THREE.Mesh(coneGeom, mat.clone()); sFront.position.set(0, 0.03, -0.06); sFront.rotation.x = Math.PI; robot.add(sFront);
+            const sBack = new THREE.Mesh(coneGeom, mat.clone()); sBack.position.set(0, 0.03, 0.06); robot.add(sBack);
+            const sRight = new THREE.Mesh(coneGeom, mat.clone()); sRight.position.set(0.06, 0.03, 0); sRight.rotation.z = -Math.PI / 2; robot.add(sRight);
+            const sLeft = new THREE.Mesh(coneGeom, mat.clone()); sLeft.position.set(-0.06, 0.03, 0); sLeft.rotation.z = Math.PI / 2; robot.add(sLeft);
         }
         createSensorMeshes();
 
         function updateSensors() {
-            const origin = new THREE.Vector3();
-            origin.copy(robot.position);
-            origin.y += 0.03;
-
-            // local directions
+            const origin = new THREE.Vector3().copy(robot.position); origin.y += 0.03;
             const dirF = new THREE.Vector3(0, 0, -1).applyQuaternion(robot.quaternion).normalize();
             const dirB = new THREE.Vector3(0, 0, 1).applyQuaternion(robot.quaternion).normalize();
             const dirR = new THREE.Vector3(1, 0, 0).applyQuaternion(robot.quaternion).normalize();
             const dirL = new THREE.Vector3(-1, 0, 0).applyQuaternion(robot.quaternion).normalize();
 
-            rayFront.set(origin, dirF);
-            rayRight.set(origin, dirR);
-            rayBack.set(origin, dirB);
-            rayLeft.set(origin, dirL);
+            rayFront.set(origin, dirF); rayRight.set(origin, dirR); rayBack.set(origin, dirB); rayLeft.set(origin, dirL);
 
-            const iF = rayFront.intersectObjects(tofObjects, true);
-            const iR = rayRight.intersectObjects(tofObjects, true);
-            const iB = rayBack.intersectObjects(tofObjects, true);
-            const iL = rayLeft.intersectObjects(tofObjects, true);
+            const iF = rayFront.intersectObjects(tofObjects, true); const iR = rayRight.intersectObjects(tofObjects, true);
+            const iB = rayBack.intersectObjects(tofObjects, true); const iL = rayLeft.intersectObjects(tofObjects, true);
 
             sensors.front.mm = (iF.length > 0) ? Math.round(iF[0].distance * 1000) : tofMax + 1;
             sensors.right.mm = (iR.length > 0) ? Math.round(iR[0].distance * 1000) : tofMax + 1;
@@ -1474,67 +696,35 @@ void loop() {
             setSensorDisplay('left', 'val-tof-left', sensors.left.mm);
         }
 
-
         function applySensorSafety(localX, localY) {
-            const blocked = [];
-            let safeX = localX;
-            let safeY = localY;
-            const minAvoid = sensors.minAvoidMm;
-
-            if (sensors.front.mm <= minAvoid && safeY > 0) {
-                safeY = 0;
-                blocked.push('FRONT');
-            }
-            if (sensors.back.mm <= minAvoid && safeY < 0) {
-                safeY = 0;
-                blocked.push('BACK');
-            }
-            if (sensors.right.mm <= minAvoid && safeX > 0) {
-                safeX = 0;
-                blocked.push('RIGHT');
-            }
-            if (sensors.left.mm <= minAvoid && safeX < 0) {
-                safeX = 0;
-                blocked.push('LEFT');
-            }
+            const blocked = []; let safeX = localX; let safeY = localY; const minAvoid = sensors.minAvoidMm;
+            if (sensors.front.mm <= minAvoid && safeY > 0) { safeY = 0; blocked.push('FRONT'); }
+            if (sensors.back.mm <= minAvoid && safeY < 0) { safeY = 0; blocked.push('BACK'); }
+            if (sensors.right.mm <= minAvoid && safeX > 0) { safeX = 0; blocked.push('RIGHT'); }
+            if (sensors.left.mm <= minAvoid && safeX < 0) { safeX = 0; blocked.push('LEFT'); }
 
             const safeEl = document.getElementById('val-safe');
             if (safeEl) {
-                if (blocked.length) {
-                    safeEl.textContent = `BLOCKED: ${blocked.join(', ')}`;
-                    safeEl.className = 'status-pill blocked';
-                } else {
-                    safeEl.textContent = 'AMAN';
-                    safeEl.className = 'status-pill safe';
-                }
+                if (blocked.length) { safeEl.textContent = `BLOCKED: ${blocked.join(', ')}`; safeEl.className = 'status-pill blocked'; }
+                else { safeEl.textContent = 'AMAN'; safeEl.className = 'status-pill safe'; }
             }
-
             return { x: safeX, y: safeY, blocked };
         }
 
-        function setText(id, value) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = value;
-        }
+        function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
 
         function setSensorDisplay(key, id, rawValue) {
-            const el = document.getElementById(id);
-            if (!el) return;
-
+            const el = document.getElementById(id); if (!el) return;
             const value = Number(rawValue);
             if (Number.isFinite(value)) {
                 sensors[key].mm = value;
                 el.textContent = value > tofMax ? `> ${tofMax}` : Math.round(value);
                 el.className = value <= sensors.minAvoidMm ? 'danger' : 'ok';
-            } else {
-                el.textContent = rawValue ?? '--';
-                el.className = '';
-            }
+            } else { el.textContent = rawValue ?? '--'; el.className = ''; }
         }
 
         function getBlockedByProximity() {
-            const blocked = [];
-            const min = sensors.minAvoidMm;
+            const blocked = []; const min = sensors.minAvoidMm;
             if (sensors.front.mm <= min) blocked.push('FRONT');
             if (sensors.right.mm <= min) blocked.push('RIGHT');
             if (sensors.back.mm <= min) blocked.push('BACK');
@@ -1543,30 +733,19 @@ void loop() {
         }
 
         function setSafetyBadge(blocked) {
-            const safeEl = document.getElementById('val-safe');
-            if (!safeEl) return;
-            if (blocked && blocked.length) {
-                safeEl.textContent = `BLOCK ${blocked.join('/')}`;
-                safeEl.className = 'status-pill blocked';
-            } else {
-                safeEl.textContent = 'AMAN';
-                safeEl.className = 'status-pill safe';
-            }
+            const safeEl = document.getElementById('val-safe'); if (!safeEl) return;
+            if (blocked && blocked.length) { safeEl.textContent = `BLOCK ${blocked.join('/')}`; safeEl.className = 'status-pill blocked'; }
+            else { safeEl.textContent = 'AMAN'; safeEl.className = 'status-pill safe'; }
         }
 
         function updateMonitorFromEsp(data) {
             if (!data || typeof data !== 'object') return;
-
             if (data.mode != null) setText('val-mode', String(data.mode).toUpperCase());
-
             if (data.cmd || data.input) {
                 const c = data.cmd || data.input;
-                const x = Number(c.x ?? c.lx ?? 0);
-                const y = Number(c.y ?? c.ly ?? 0);
-                const turn = Number(c.turn ?? c.z ?? c.rx ?? 0);
+                const x = Number(c.x ?? c.lx ?? 0); const y = Number(c.y ?? c.ly ?? 0); const turn = Number(c.turn ?? c.z ?? c.rx ?? 0);
                 setText('val-input', `X:${x.toFixed(2)} | Y:${y.toFixed(2)} | Turn:${turn.toFixed(2)}`);
             }
-
             if (data.tof) {
                 if (data.tof.front != null) setSensorDisplay('front', 'val-tof-front', data.tof.front);
                 if (data.tof.right != null) setSensorDisplay('right', 'val-tof-right', data.tof.right);
@@ -1574,55 +753,42 @@ void loop() {
                 if (data.tof.left != null) setSensorDisplay('left', 'val-tof-left', data.tof.left);
                 setSafetyBadge(getBlockedByProximity());
             }
-
             if (data.encoder || data.enc) {
                 const e = data.encoder || data.enc;
-                if (e.fl != null) setText('enc-fl', e.fl);
-                if (e.fr != null) setText('enc-fr', e.fr);
-                if (e.rl != null) setText('enc-rl', e.rl);
-                if (e.rr != null) setText('enc-rr', e.rr);
+                if (e.fl != null) setText('enc-fl', e.fl); if (e.fr != null) setText('enc-fr', e.fr);
+                if (e.rl != null) setText('enc-rl', e.rl); if (e.rr != null) setText('enc-rr', e.rr);
             }
-
             if (data.pwm) {
-                if (data.pwm.fl != null) setText('pwm-fl', data.pwm.fl);
-                if (data.pwm.fr != null) setText('pwm-fr', data.pwm.fr);
-                if (data.pwm.rl != null) setText('pwm-rl', data.pwm.rl);
-                if (data.pwm.rr != null) setText('pwm-rr', data.pwm.rr);
+                if (data.pwm.fl != null) setText('pwm-fl', data.pwm.fl); if (data.pwm.fr != null) setText('pwm-fr', data.pwm.fr);
+                if (data.pwm.rl != null) setText('pwm-rl', data.pwm.rl); if (data.pwm.rr != null) setText('pwm-rr', data.pwm.rr);
             }
-
             if (data.servo) {
                 if (data.servo[0] != null) setText('servo-1', data.servo[0]);
                 if (data.servo[1] != null) setText('servo-2', data.servo[1]);
                 if (data.servo[2] != null) setText('servo-3', data.servo[2]);
             }
-
             if (data.gyro != null) {
                 const g = Number(data.gyro);
                 if (Number.isFinite(g)) {
                     robot.rotation.y = g;
                     const deg = (g * 180 / Math.PI) % 360;
-                    setText('val-actual', `Gerak X:0.00 | Y:0.00 | Gyro:${deg.toFixed(0)}°`);
+                    setText('val-actual', `Gerak X:0.00 | Y:0.00 | Gyro:${deg.toFixed(0)}Â° | Lift:${(robot.position.y * 1000).toFixed(0)}mm`);
                 }
             }
-
             if (data.pose) {
                 if (data.pose.x != null) robot.position.x = Number(data.pose.x) || robot.position.x;
                 if (data.pose.z != null) robot.position.z = Number(data.pose.z) || robot.position.z;
                 if (data.pose.yaw != null) robot.rotation.y = Number(data.pose.yaw) || robot.rotation.y;
             }
-
             if (data.slip != null) {
-                const slipEl = document.getElementById('val-slip');
-                const slip = Number(data.slip);
+                const slipEl = document.getElementById('val-slip'); const slip = Number(data.slip);
                 if (slipEl && Number.isFinite(slip)) {
-                    slipEl.textContent = slip > 0.1 ? `⚠ STALL ${slip.toFixed(2)}` : 'Aman (0.00)';
+                    slipEl.textContent = slip > 0.1 ? `âš  STALL ${slip.toFixed(2)}` : 'Aman (0.00)';
                     slipEl.style.color = slip > 0.1 ? '#ff5a72' : '#32ffb1';
                 }
             }
         }
 
-        // 3. Roda Robot: fallback mesh langsung aktif, GLB hanya opsional.
-        // Jadi SOFTWARE MODE tidak akan stuck di "Memuat GLB" kalau file Roda_Omni_53mm.glb belum ada.
         const loader = new THREE.GLTFLoader();
         const wheels = new Array(4);
         let wheelsLoaded = 4;
@@ -1630,56 +796,24 @@ void loop() {
 
         const posOff = 0.06;
         const yOff = -0.0035;
-        const corners = [
-            [-posOff, yOff, -posOff],
-            [posOff, yOff, -posOff],
-            [-posOff, yOff, posOff],
-            [posOff, yOff, posOff]
-        ];
+        const corners = [[-posOff, yOff, -posOff], [posOff, yOff, -posOff], [-posOff, yOff, posOff], [posOff, yOff, posOff]];
         const anglesY = [-Math.PI / 4, Math.PI / 4, Math.PI / 4, -Math.PI / 4];
         const modelPath = 'Web_Assets/Roda_Omni_53mm.glb';
 
         function setSlipText(text, color = '#32ffb1') {
             const slipEl = document.getElementById('val-slip');
             if (!slipEl) return;
-            slipEl.innerHTML = text;
-            slipEl.style.color = color;
+            slipEl.innerHTML = text; slipEl.style.color = color;
         }
 
         function createFallbackWheel(index) {
             const wheelGroup = new THREE.Group();
-
-            const tire = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.020, 0.020, 0.014, 28),
-                new THREE.MeshPhongMaterial({
-                    color: 0x06131c,
-                    emissive: 0x003a4a,
-                    emissiveIntensity: 0.45,
-                    shininess: 24
-                })
-            );
-            tire.rotation.z = Math.PI / 2;
-            wheelGroup.add(tire);
-
-            const hub = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.010, 0.010, 0.017, 20),
-                new THREE.MeshPhongMaterial({
-                    color: 0x00d1ff,
-                    emissive: 0x00d1ff,
-                    emissiveIntensity: 0.55,
-                    shininess: 35
-                })
-            );
-            hub.rotation.z = Math.PI / 2;
-            wheelGroup.add(hub);
-
-            // garis kecil biar kelihatan roda muter walaupun GLB belum ada
-            const spoke = new THREE.Mesh(
-                new THREE.BoxGeometry(0.004, 0.004, 0.040),
-                new THREE.MeshBasicMaterial({ color: 0x32ffb1 })
-            );
+            const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.020, 0.020, 0.014, 28), new THREE.MeshPhongMaterial({ color: 0x06131c, emissive: 0x003a4a, emissiveIntensity: 0.45, shininess: 24 }));
+            tire.rotation.z = Math.PI / 2; wheelGroup.add(tire);
+            const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.017, 20), new THREE.MeshPhongMaterial({ color: 0x00d1ff, emissive: 0x00d1ff, emissiveIntensity: 0.55, shininess: 35 }));
+            hub.rotation.z = Math.PI / 2; wheelGroup.add(hub);
+            const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.004, 0.040), new THREE.MeshBasicMaterial({ color: 0x32ffb1 }));
             wheelGroup.add(spoke);
-
             return wheelGroup;
         }
 
@@ -1687,299 +821,222 @@ void loop() {
             const group = new THREE.Group();
             group.position.set(corners[index][0], corners[index][1], corners[index][2]);
             group.rotation.y = anglesY[index];
-            group.add(wheelObject);
-            robot.add(group);
-            wheels[index] = wheelObject;
+            group.add(wheelObject); robot.add(group); wheels[index] = wheelObject;
             return group;
         }
 
         const wheelMountGroups = corners.map((_, i) => mountWheelObject(createFallbackWheel(i), i));
         setSlipText('Software mode siap<br><small style="font-size:11px;color:#9db6c9;">Roda fallback aktif, GLB opsional</small>');
 
-        // Opsional: kalau file GLB tersedia, fallback wheel akan diganti otomatis.
         corners.forEach((pos, i) => {
             loader.load(modelPath, function (gltf) {
                 const wMesh = gltf.scene;
-
                 const box = new THREE.Box3().setFromObject(wMesh);
                 const center = box.getCenter(new THREE.Vector3());
                 wMesh.children.forEach(child => { child.position.sub(center); });
-
-                wMesh.scale.set(1.0, 1.0, 1.0);
-                wMesh.rotation.x = -Math.PI / 2;
-                wMesh.rotation.z = Math.PI / 2;
-
-                wheelMountGroups[i].clear();
-                wheelMountGroups[i].add(wMesh);
-                wheels[i] = wMesh;
-                wheelSource = 'glb';
-
+                wMesh.scale.set(1.0, 1.0, 1.0); wMesh.rotation.x = -Math.PI / 2; wMesh.rotation.z = Math.PI / 2;
+                wheelMountGroups[i].clear(); wheelMountGroups[i].add(wMesh); wheels[i] = wMesh; wheelSource = 'glb';
                 setSlipText('Aman (GLB loaded)', '#32ffb1');
-            }, undefined, function (error) {
-                console.warn('GLB tidak ditemukan, memakai roda fallback:', error);
-                // Tidak error fatal. Software mode tetap jalan.
-                wheelSource = 'fallback';
-            });
+            }, undefined, function (error) { wheelSource = 'fallback'; });
         });
 
-        // 4. Logika Resize & UI Buttons
         function resizeCanvas() {
-            // Memberi waktu untuk transisi CSS selesai sebelum mengkalkulasi ulang dimensi
             setTimeout(() => {
                 camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
+                camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight);
             }, 210);
         }
 
         document.getElementById('toggle-editor-btn').addEventListener('click', () => {
             editorVisible = !editorVisible;
-            leftPanel.style.display = editorVisible ? 'flex' : 'none';
-            resizeCanvas();
+            leftPanel.style.display = editorVisible ? 'flex' : 'none'; resizeCanvas();
             if (editor && editor.refresh) setTimeout(() => editor.refresh(), 60);
         });
 
         document.getElementById('toggle-overlay-btn').addEventListener('click', () => {
-            overlayVisible = !overlayVisible;
-            overlay.style.opacity = overlayVisible ? '1' : '0';
+            overlayVisible = !overlayVisible; overlay.style.opacity = overlayVisible ? '1' : '0';
         });
 
         document.getElementById('reset-view-btn').addEventListener('click', () => {
-            camera.position.set(0, 3.15, 2.75); controls.target.set(0, 0, 0);
-            controls.update();
+            camera.position.set(0, 2.8, 2.6); controls.target.set(0, 0, 0); controls.update();
         });
 
-        // ==========================================================
-        // GYRO PID SETTINGS
-        // UBAH Kp / Ki / Kd DI SINI kalau mau tuning manual dari kode.
-        // Bisa juga diubah live dari box Input Command pada panel monitor.
-        // ==========================================================
-        const SIM_PID_SETTINGS = {
-            kp: 1.65,
-            ki: 0.00,
-            kd: 0.32,
-            maxOutput: 0.75,
-            maxIntegral: 1.50
-        };
+        const SIM_PID_SETTINGS = { kp: 1.65, ki: 0.00, kd: 0.32, maxOutput: 0.75, maxIntegral: 1.50 };
 
-        // View lock + robot mouse disturbance test.
-        let viewLocked = false;
-        let robotMouseMode = false;
-        let gyroPidEnabled = true;
-        const gyroPid = {
-            targetYaw: robot.rotation.y,
-            kp: SIM_PID_SETTINGS.kp,
-            ki: SIM_PID_SETTINGS.ki,
-            kd: SIM_PID_SETTINGS.kd,
-            integral: 0,
-            lastError: 0,
-            hasLastError: false,
-            lastTime: performance.now(),
-            output: 0
-        };
+        let viewLocked = false; let robotMouseMode = false; let gyroPidEnabled = true;
+
+        const gyroPid = { targetYaw: 0, kp: SIM_PID_SETTINGS.kp, ki: SIM_PID_SETTINGS.ki, kd: SIM_PID_SETTINGS.kd, integral: 0, lastError: 0, hasLastError: false, lastTime: performance.now(), output: 0 };
 
         function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
         function wrapAngle(a) { return Math.atan2(Math.sin(a), Math.cos(a)); }
         function radToDeg(v) { return ((v * 180 / Math.PI) % 360 + 360) % 360; }
 
+
+        // ==========================================================
+        // RAMP / GROUND FOLLOW PHYSICS
+        // ----------------------------------------------------------
+        // Robot tidak hanya naik-turun Y, tapi juga pitch/roll mengikuti
+        // kemiringan ramp. Sistem ini sampling tinggi lantai di 4 titik
+        // roda lalu menghitung sudut miring body robot.
+        // ==========================================================
+        const ROBOT_GROUND = {
+            halfX: 0.055,          // setengah lebar robot / jarak sample roda kanan-kiri
+            halfZ: 0.055,          // setengah panjang robot / jarak sample roda depan-belakang
+            wheelClearance: 0.030, // tinggi pusat body dari permukaan lantai
+            smoothY: 0.35,
+            smoothTilt: 0.22,
+            maxTiltRad: 0.55,
+            rayY: 1.20
+        };
+
+        function sampleFloorY(worldX, worldZ) {
+            const rayDown = new THREE.Raycaster(
+                new THREE.Vector3(worldX, ROBOT_GROUND.rayY, worldZ),
+                new THREE.Vector3(0, -1, 0)
+            );
+            const hits = rayDown.intersectObjects(floorObjects, true);
+            if (hits.length > 0) return hits[0].point.y;
+            return 0;
+        }
+
+        function yawLocalToWorldOffset(localX, localZ, yaw) {
+            const c = Math.cos(yaw);
+            const s = Math.sin(yaw);
+            return {
+                x: robot.position.x + localX * c + localZ * s,
+                z: robot.position.z - localX * s + localZ * c
+            };
+        }
+
+        function updateRobotGroundPose() {
+            // Saat ROBOT MOUSE ON, tilt/lift manual jangan ditimpa oleh terrain.
+            if (robotMouseMode) return;
+
+            const yaw = robot.rotation.y;
+            const hx = ROBOT_GROUND.halfX;
+            const hz = ROBOT_GROUND.halfZ;
+
+            // Local -Z = FRONT robot.
+            const pFL = yawLocalToWorldOffset(-hx, -hz, yaw);
+            const pFR = yawLocalToWorldOffset(hx, -hz, yaw);
+            const pRL = yawLocalToWorldOffset(-hx, hz, yaw);
+            const pRR = yawLocalToWorldOffset(hx, hz, yaw);
+
+            const hFL = sampleFloorY(pFL.x, pFL.z);
+            const hFR = sampleFloorY(pFR.x, pFR.z);
+            const hRL = sampleFloorY(pRL.x, pRL.z);
+            const hRR = sampleFloorY(pRR.x, pRR.z);
+
+            const frontH = (hFL + hFR) * 0.5;
+            const rearH = (hRL + hRR) * 0.5;
+            const leftH = (hFL + hRL) * 0.5;
+            const rightH = (hFR + hRR) * 0.5;
+            const avgH = (hFL + hFR + hRL + hRR) * 0.25;
+
+            const targetY = avgH + ROBOT_GROUND.wheelClearance;
+
+            // rotation.x positif = hidung/front robot naik.
+            const targetPitch = clamp(
+                Math.atan2(frontH - rearH, hz * 2),
+                -ROBOT_GROUND.maxTiltRad,
+                ROBOT_GROUND.maxTiltRad
+            );
+
+            // rotation.z positif = sisi kanan robot naik.
+            const targetRoll = clamp(
+                Math.atan2(rightH - leftH, hx * 2),
+                -ROBOT_GROUND.maxTiltRad,
+                ROBOT_GROUND.maxTiltRad
+            );
+
+            robot.position.y += (targetY - robot.position.y) * ROBOT_GROUND.smoothY;
+            robot.rotation.x += (targetPitch - robot.rotation.x) * ROBOT_GROUND.smoothTilt;
+            robot.rotation.z += (targetRoll - robot.rotation.z) * ROBOT_GROUND.smoothTilt;
+        }
+
         function refreshControlButtons() {
-            const lockBtn = document.getElementById('lock-view-btn');
-            const mouseBtn = document.getElementById('robot-mouse-btn');
-            const pidBtn = document.getElementById('gyro-pid-btn');
-            if (lockBtn) {
-                lockBtn.textContent = viewLocked ? 'LOCK VIEW ON' : 'LOCK VIEW OFF';
-                lockBtn.classList.toggle('active-toggle', viewLocked);
-            }
-            if (mouseBtn) {
-                mouseBtn.textContent = robotMouseMode ? 'ROBOT MOUSE ON' : 'ROBOT MOUSE OFF';
-                mouseBtn.classList.toggle('active-toggle', robotMouseMode);
-            }
-            if (pidBtn) {
-                pidBtn.textContent = gyroPidEnabled ? 'GYRO PID ON' : 'GYRO PID OFF';
-                pidBtn.classList.toggle('active-toggle', gyroPidEnabled);
-            }
-            controls.enabled = !viewLocked && !robotMouseMode;
-            container.classList.toggle('robot-manip-active', robotMouseMode);
-            setText('mouse-state', robotMouseMode ? 'ON' : 'OFF');
+            const lockBtn = document.getElementById('lock-view-btn'); const mouseBtn = document.getElementById('robot-mouse-btn'); const pidBtn = document.getElementById('gyro-pid-btn');
+            if (lockBtn) { lockBtn.textContent = viewLocked ? 'LOCK VIEW ON' : 'LOCK VIEW OFF'; lockBtn.classList.toggle('active-toggle', viewLocked); }
+            if (mouseBtn) { mouseBtn.textContent = robotMouseMode ? 'ROBOT MOUSE ON' : 'ROBOT MOUSE OFF'; mouseBtn.classList.toggle('active-toggle', robotMouseMode); }
+            if (pidBtn) { pidBtn.textContent = gyroPidEnabled ? 'GYRO PID ON' : 'GYRO PID OFF'; pidBtn.classList.toggle('active-toggle', gyroPidEnabled); }
+            controls.enabled = !viewLocked && !robotMouseMode; container.classList.toggle('robot-manip-active', robotMouseMode); setText('mouse-state', robotMouseMode ? 'ON' : 'OFF');
         }
 
         function updatePidMonitor() {
-            setText('pid-current', `${radToDeg(robot.rotation.y).toFixed(0)}°`);
-            setText('pid-target', `${radToDeg(gyroPid.targetYaw).toFixed(0)}°`);
-            setText('pid-out', gyroPid.output.toFixed(2));
+            setText('pid-current', `${radToDeg(robot.rotation.y).toFixed(0)}Â°`); setText('pid-target', `${radToDeg(gyroPid.targetYaw).toFixed(0)}Â°`); setText('pid-out', gyroPid.output.toFixed(2));
         }
 
         function syncPidInputsFromState() {
-            const kp = document.getElementById('pid-kp');
-            const ki = document.getElementById('pid-ki');
-            const kd = document.getElementById('pid-kd');
-            if (kp) kp.value = gyroPid.kp;
-            if (ki) ki.value = gyroPid.ki;
-            if (kd) kd.value = gyroPid.kd;
+            const kp = document.getElementById('pid-kp'); const ki = document.getElementById('pid-ki'); const kd = document.getElementById('pid-kd');
+            if (kp) kp.value = gyroPid.kp; if (ki) ki.value = gyroPid.ki; if (kd) kd.value = gyroPid.kd;
         }
 
         function readPidInputsToState() {
-            const kp = parseFloat(document.getElementById('pid-kp')?.value);
-            const ki = parseFloat(document.getElementById('pid-ki')?.value);
-            const kd = parseFloat(document.getElementById('pid-kd')?.value);
-            if (Number.isFinite(kp)) gyroPid.kp = kp;
-            if (Number.isFinite(ki)) gyroPid.ki = ki;
-            if (Number.isFinite(kd)) gyroPid.kd = kd;
+            const kp = parseFloat(document.getElementById('pid-kp')?.value); const ki = parseFloat(document.getElementById('pid-ki')?.value); const kd = parseFloat(document.getElementById('pid-kd')?.value);
+            if (Number.isFinite(kp)) gyroPid.kp = kp; if (Number.isFinite(ki)) gyroPid.ki = ki; if (Number.isFinite(kd)) gyroPid.kd = kd;
         }
 
-        ['pid-kp', 'pid-ki', 'pid-kd'].forEach(id => {
-            document.addEventListener('input', (e) => {
-                if (e.target && e.target.id === id) readPidInputsToState();
-            });
-        });
+        ['pid-kp', 'pid-ki', 'pid-kd'].forEach(id => { document.addEventListener('input', (e) => { if (e.target && e.target.id === id) readPidInputsToState(); }); });
 
-        document.getElementById('lock-view-btn').addEventListener('click', () => {
-            viewLocked = !viewLocked;
-            refreshControlButtons();
-        });
-
-        document.getElementById('robot-mouse-btn').addEventListener('click', () => {
-            robotMouseMode = !robotMouseMode;
-            refreshControlButtons();
-        });
-
+        document.getElementById('lock-view-btn').addEventListener('click', () => { viewLocked = !viewLocked; refreshControlButtons(); });
+        document.getElementById('robot-mouse-btn').addEventListener('click', () => { robotMouseMode = !robotMouseMode; refreshControlButtons(); });
         document.getElementById('gyro-pid-btn').addEventListener('click', () => {
             gyroPidEnabled = !gyroPidEnabled;
-            if (!gyroPidEnabled) {
-                gyroPid.targetYaw = robot.rotation.y;
-                gyroPid.integral = 0;
-                gyroPid.hasLastError = false;
-                gyroPid.output = 0;
-            }
-            refreshControlButtons();
-            updatePidMonitor();
+            if (!gyroPidEnabled) { gyroPid.targetYaw = robot.rotation.y; gyroPid.integral = 0; gyroPid.lastError = 0; gyroPid.hasLastError = false; gyroPid.output = 0; }
+            refreshControlButtons(); updatePidMonitor();
         });
 
         document.getElementById('reset-robot-btn').addEventListener('click', () => {
-            robot.position.set(0, 0.03, -1.375);
-            robot.rotation.set(0, Math.PI, 0);
-            gyroPid.targetYaw = robot.rotation.y;
-            gyroPid.integral = 0;
-            gyroPid.lastError = 0;
-            gyroPid.hasLastError = false;
-            gyroPid.output = 0;
-            setText('val-actual', 'Gerak X:0.00 | Y:0.00 | Gyro:0°');
-            updatePidMonitor();
+            robot.position.set(0, 0.03, 1.375); robot.rotation.set(0, 0, 0);
+            gyroPid.targetYaw = robot.rotation.y; gyroPid.integral = 0; gyroPid.lastError = 0; gyroPid.hasLastError = false; gyroPid.output = 0;
+            setText('val-actual', 'Gerak X:0.00 | Y:0.00 | Gyro:0Â° | Lift:30mm'); updatePidMonitor();
         });
 
         (function enableRobotMouseManipulation() {
             const canvas = renderer.domElement;
-            const state = {
-                active: false,
-                mode: 'yaw',
-                sx: 0,
-                sy: 0,
-                yaw: 0,
-                lift: 0,
-                pitch: 0,
-                roll: 0
-            };
-
+            const state = { active: false, mode: 'yaw', sx: 0, sy: 0, yaw: 0, lift: 0, pitch: 0, roll: 0 };
             canvas.addEventListener('pointerdown', (e) => {
-                if (!robotMouseMode) return;
-                e.preventDefault();
-                state.active = true;
-                state.mode = e.shiftKey ? 'lift' : (e.altKey ? 'tilt' : 'yaw');
-                state.sx = e.clientX;
-                state.sy = e.clientY;
-                state.yaw = robot.rotation.y;
-                state.lift = robot.position.y;
-                state.pitch = robot.rotation.x;
-                state.roll = robot.rotation.z;
+                if (!robotMouseMode) return; e.preventDefault(); state.active = true; state.mode = e.shiftKey ? 'lift' : (e.altKey ? 'tilt' : 'yaw');
+                state.sx = e.clientX; state.sy = e.clientY; state.yaw = robot.rotation.y; state.lift = robot.position.y; state.pitch = robot.rotation.x; state.roll = robot.rotation.z;
                 canvas.setPointerCapture?.(e.pointerId);
             });
-
             canvas.addEventListener('pointermove', (e) => {
-                if (!state.active || !robotMouseMode) return;
-                e.preventDefault();
-                const dx = e.clientX - state.sx;
-                const dy = e.clientY - state.sy;
-
-                if (state.mode === 'lift' || e.shiftKey) {
-                    robot.position.y = clamp(state.lift - dy * 0.0022, 0.02, 0.36);
-                } else if (state.mode === 'tilt' || e.altKey) {
-                    robot.rotation.x = clamp(state.pitch + dy * 0.006, -0.55, 0.55);
-                    robot.rotation.z = clamp(state.roll - dx * 0.006, -0.55, 0.55);
-                } else {
-                    robot.rotation.y = state.yaw + dx * 0.010;
-                    // Target tidak ikut diubah. Jadi kalau Gyro PID ON, robot akan mencoba balik ke target heading.
-                }
+                if (!state.active || !robotMouseMode) return; e.preventDefault(); const dx = e.clientX - state.sx; const dy = e.clientY - state.sy;
+                if (state.mode === 'lift' || e.shiftKey) { robot.position.y = clamp(state.lift - dy * 0.0022, 0.02, 0.36); }
+                else if (state.mode === 'tilt' || e.altKey) { robot.rotation.x = clamp(state.pitch + dy * 0.006, -0.55, 0.55); robot.rotation.z = clamp(state.roll - dx * 0.006, -0.55, 0.55); }
+                else { robot.rotation.y = state.yaw + dx * 0.010; }
                 updatePidMonitor();
             });
-
-            const end = (e) => {
-                if (!state.active) return;
-                state.active = false;
-                canvas.releasePointerCapture?.(e.pointerId);
-            };
-            canvas.addEventListener('pointerup', end);
-            canvas.addEventListener('pointercancel', end);
-
+            const end = (e) => { if (!state.active) return; state.active = false; canvas.releasePointerCapture?.(e.pointerId); };
+            canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
             canvas.addEventListener('dblclick', (e) => {
-                if (!robotMouseMode) return;
-                e.preventDefault();
-                robot.rotation.x = 0;
-                robot.rotation.z = 0;
-                robot.position.y = 0.03;
-                updatePidMonitor();
+                if (!robotMouseMode) return; e.preventDefault(); robot.rotation.x = 0; robot.rotation.z = 0; robot.position.y = 0.03; updatePidMonitor();
             });
         })();
 
-        syncPidInputsFromState();
-        refreshControlButtons();
-        updatePidMonitor();
+        syncPidInputsFromState(); refreshControlButtons(); updatePidMonitor();
 
-        let appMode = 'SOFTWARE'; // SOFTWARE = data dari stick/browser, WIFI = monitor dari ESP32 via hotspot/tethering laptop
-        const espWifi = {
-            baseUrl: '',
-            polling: false,
-            timer: null,
-            lastPacketAt: 0
-        };
+        let appMode = 'SOFTWARE';
+        const espWifi = { baseUrl: '', polling: false, timer: null, lastPacketAt: 0 };
 
         function normalizeEspBaseUrl(raw) {
-            let value = String(raw || '').trim();
-            if (!value) return '';
-            if (!/^https?:\/\//i.test(value)) value = 'http://' + value;
-            return value.replace(/\/+$/, '');
+            let value = String(raw || '').trim(); if (!value) return ''; if (!/^https?:\/\//i.test(value)) value = 'http://' + value; return value.replace(/\/+$/, '');
         }
 
-        function espDataUrl() {
-            return `${espWifi.baseUrl}/data?t=${Date.now()}`;
-        }
+        function espDataUrl() { return `${espWifi.baseUrl}/data?t=${Date.now()}`; }
 
         function updateModeUI() {
             const modeEl = document.getElementById('val-mode');
             const label = appMode === 'WIFI' ? 'ESP32 WIFI MONITOR' : 'SOFTWARE GAMEPAD';
             document.getElementById('toggle-mode-btn').textContent = appMode === 'WIFI' ? 'MODE: WIFI' : 'MODE: SOFTWARE';
-            if (modeEl) {
-                modeEl.textContent = label;
-                modeEl.className = appMode === 'WIFI' ? 'safe' : 'safe';
-            }
+            if (modeEl) { modeEl.textContent = label; modeEl.className = appMode === 'WIFI' ? 'safe' : 'safe'; }
         }
 
         function setEspConnectionState(state, detail = '') {
-            const espStatus = document.getElementById('esp-status');
-            const btn = document.getElementById('connect-esp-btn');
-
-            if (state === 'online') {
-                espStatus.textContent = 'ONLINE';
-                espStatus.className = 'safe';
-                btn.textContent = 'DISCONNECT WIFI';
-            } else if (state === 'connecting') {
-                espStatus.textContent = 'CONNECTING...';
-                espStatus.className = '';
-                btn.textContent = 'CONNECTING';
-            } else {
-                espStatus.textContent = detail || 'OFFLINE';
-                espStatus.className = 'blocked';
-                btn.textContent = 'CONNECT WIFI';
-            }
+            const espStatus = document.getElementById('esp-status'); const btn = document.getElementById('connect-esp-btn');
+            if (state === 'online') { espStatus.textContent = 'ONLINE'; espStatus.className = 'safe'; btn.textContent = 'DISCONNECT WIFI'; }
+            else if (state === 'connecting') { espStatus.textContent = 'CONNECTING...'; espStatus.className = ''; btn.textContent = 'CONNECTING'; }
+            else { espStatus.textContent = detail || 'OFFLINE'; espStatus.className = 'blocked'; btn.textContent = 'CONNECT WIFI'; }
         }
 
         async function pollEspOnce() {
@@ -1988,203 +1045,102 @@ void loop() {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const latency = Math.round(performance.now() - startedAt);
-
             espWifi.lastPacketAt = Date.now();
-            setText('esp-latency', `${latency} ms`);
-            setText('esp-ip-display', espWifi.baseUrl);
-            setEspConnectionState('online');
-            updateMonitorFromEsp(data);
+            setText('esp-latency', `${latency} ms`); setText('esp-ip-display', espWifi.baseUrl);
+            setEspConnectionState('online'); updateMonitorFromEsp(data);
         }
 
         function startEspPolling() {
             if (espWifi.timer) clearInterval(espWifi.timer);
-            espWifi.polling = true;
-            appMode = 'WIFI';
-            updateModeUI();
-
-            pollEspOnce().catch(err => {
-                setEspConnectionState('offline', 'NO RESPONSE');
-                console.warn('ESP32 WiFi poll failed:', err);
-            });
-
+            espWifi.polling = true; appMode = 'WIFI'; updateModeUI();
+            pollEspOnce().catch(err => { setEspConnectionState('offline', 'NO RESPONSE'); console.warn('ESP32 WiFi poll failed:', err); });
             espWifi.timer = setInterval(async () => {
                 if (!espWifi.polling) return;
-                try {
-                    await pollEspOnce();
-                } catch (err) {
+                try { await pollEspOnce(); } catch (err) {
                     const tooLong = Date.now() - espWifi.lastPacketAt > 1500;
                     if (tooLong) setEspConnectionState('offline', 'TIMEOUT');
-                    console.warn('ESP32 WiFi poll failed:', err);
                 }
             }, 120);
         }
 
         function stopEspPolling() {
-            espWifi.polling = false;
-            if (espWifi.timer) clearInterval(espWifi.timer);
-            espWifi.timer = null;
+            espWifi.polling = false; if (espWifi.timer) clearInterval(espWifi.timer); espWifi.timer = null;
             setEspConnectionState('offline', 'OFFLINE');
         }
 
-        document.getElementById('toggle-mode-btn').addEventListener('click', () => {
-            appMode = appMode === 'SOFTWARE' ? 'WIFI' : 'SOFTWARE';
-            updateModeUI();
-        });
+        document.getElementById('toggle-mode-btn').addEventListener('click', () => { appMode = appMode === 'SOFTWARE' ? 'WIFI' : 'SOFTWARE'; updateModeUI(); });
 
         document.getElementById('connect-esp-btn').addEventListener('click', async () => {
-            if (espWifi.polling) {
-                stopEspPolling();
-                return;
-            }
-
-            const input = document.getElementById('esp-ip-input');
-            const base = normalizeEspBaseUrl(input.value);
-            if (!base || base.includes('XX')) {
-                alert('Isi IP ESP32 dulu. Contoh: http://192.168.137.45');
-                return;
-            }
-
-            espWifi.baseUrl = base;
-            setText('esp-ip-display', espWifi.baseUrl);
-            setEspConnectionState('connecting');
-
-            try {
-                await pollEspOnce();
-                startEspPolling();
-            } catch (err) {
+            if (espWifi.polling) { stopEspPolling(); return; }
+            const input = document.getElementById('esp-ip-input'); const base = normalizeEspBaseUrl(input.value);
+            if (!base || base.includes('XX')) { alert('Isi IP ESP32 dulu. Contoh: http://192.168.137.45'); return; }
+            espWifi.baseUrl = base; setText('esp-ip-display', espWifi.baseUrl); setEspConnectionState('connecting');
+            try { await pollEspOnce(); startEspPolling(); } catch (err) {
                 setEspConnectionState('offline', 'NO RESPONSE');
                 alert('ESP32 belum kebaca. Pastikan laptop dan ESP32 satu hotspot/tethering, endpoint /data aktif, dan CORS di ESP32 sudah pakai Access-Control-Allow-Origin: *');
-                console.warn('ESP32 WiFi connection failed:', err);
             }
         });
 
-        updateModeUI();
-        setEspConnectionState('offline', 'OFFLINE');
-
+        updateModeUI(); setEspConnectionState('offline', 'OFFLINE');
         window.addEventListener('resize', resizeCanvas);
 
-        // 5. Koneksi Gamepad
         let gamepadIndex = null;
-        window.addEventListener("gamepadconnected", (e) => {
-            gamepadIndex = e.gamepad.index;
-            document.getElementById('gp-status').innerHTML = `Terhubung: ${e.gamepad.id}`;
-            document.getElementById('gp-status').style.color = "#00ff00";
-        });
+        window.addEventListener("gamepadconnected", (e) => { gamepadIndex = e.gamepad.index; document.getElementById('gp-status').innerHTML = `Terhubung: ${e.gamepad.id}`; document.getElementById('gp-status').style.color = "#00ff00"; });
         window.addEventListener("gamepaddisconnected", (e) => {
-            if (e.gamepad.index === gamepadIndex) {
-                gamepadIndex = null;
-                document.getElementById('gp-status').innerHTML = `KLIK LAYAR & TEKAN TOMBOL STIK PS4!`;
-                document.getElementById('gp-status').style.color = "#ffaa00";
-            }
+            if (e.gamepad.index === gamepadIndex) { gamepadIndex = null; document.getElementById('gp-status').innerHTML = `KLIK LAYAR & TEKAN TOMBOL STIK PS4!`; document.getElementById('gp-status').style.color = "#ffaa00"; }
         });
 
-        // Autosave keys and simulated IMU
-        const STORAGE_KEY = 'transporter_tc2026_sim_v1';
+        const STORAGE_KEY = 'transporter_tc2026_sim_v3_ramp_tilt';
+        const imu = { gyroZ: 0, lastTime: performance.now(), update() { this.gyroZ = robot.rotation.y; this.lastTime = performance.now(); } };
 
-        const imu = {
-            gyroZ: 0,
-            lastTime: performance.now(),
-            update() {
-                // Simulated IMU: mirror robot yaw (radian)
-                this.gyroZ = robot.rotation.y;
-                this.lastTime = performance.now();
-            }
-        };
-
-        // Autosave / persistence
         let saveTimer = null;
         function getSnapshot() {
             return {
-                camera: {
-                    position: [camera.position.x, camera.position.y, camera.position.z],
-                    target: [controls.target.x, controls.target.y, controls.target.z]
-                },
-                robot: {
-                    position: [robot.position.x, robot.position.y, robot.position.z],
-                    rotX: robot.rotation.x,
-                    rotY: robot.rotation.y,
-                    rotZ: robot.rotation.z,
-                    targetYaw: gyroPid.targetYaw
-                },
+                camera: { position: [camera.position.x, camera.position.y, camera.position.z], target: [controls.target.x, controls.target.y, controls.target.z] },
+                robot: { position: [robot.position.x, robot.position.y, robot.position.z], rotX: robot.rotation.x, rotY: robot.rotation.y, rotZ: robot.rotation.z, targetYaw: gyroPid.targetYaw },
                 timestamp: Date.now()
             };
         }
 
-        function saveState() {
-            try {
-                const snap = getSnapshot();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
-                console.debug('simulator: state saved', { key: STORAGE_KEY });
-            } catch (e) {
-                console.warn('Failed saving simulator state', e);
-            }
-        }
+        function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(getSnapshot())); } catch (e) { } }
 
         function loadState() {
             try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) return;
-                const st = JSON.parse(raw);
-                console.debug('simulator: state loaded', { key: STORAGE_KEY });
-                if (st.camera && Array.isArray(st.camera.position)) {
-                    camera.position.set(st.camera.position[0], st.camera.position[1], st.camera.position[2]);
-                }
-                if (st.camera && Array.isArray(st.camera.target)) {
-                    controls.target.set(st.camera.target[0], st.camera.target[1], st.camera.target[2]);
-                }
-                if (st.robot && Array.isArray(st.robot.position)) {
-                    robot.position.set(st.robot.position[0], st.robot.position[1], st.robot.position[2]);
-                }
+                const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return; const st = JSON.parse(raw);
+                if (st.camera && Array.isArray(st.camera.position)) { camera.position.set(st.camera.position[0], st.camera.position[1], st.camera.position[2]); }
+                if (st.camera && Array.isArray(st.camera.target)) { controls.target.set(st.camera.target[0], st.camera.target[1], st.camera.target[2]); }
+                if (st.robot && Array.isArray(st.robot.position)) { robot.position.set(st.robot.position[0], st.robot.position[1], st.robot.position[2]); }
                 if (st.robot && typeof st.robot.rotX === 'number') robot.rotation.x = st.robot.rotX;
                 if (st.robot && typeof st.robot.rotY === 'number') robot.rotation.y = st.robot.rotY;
                 if (st.robot && typeof st.robot.rotZ === 'number') robot.rotation.z = st.robot.rotZ;
                 if (st.robot && typeof st.robot.targetYaw === 'number') gyroPid.targetYaw = st.robot.targetYaw;
                 controls.update();
-            } catch (e) {
-                console.warn('Failed loading simulator state', e);
-            }
+            } catch (e) { }
         }
 
         function maybeScheduleSave() {
             if (saveTimer) return;
-            saveTimer = setTimeout(() => {
-                saveState();
-                saveTimer = null;
-            }, 1000);
+            saveTimer = setTimeout(() => { saveState(); saveTimer = null; }, 1000);
         }
 
         window.addEventListener('beforeunload', () => saveState());
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveState(); });
 
-        // 6. Mesin Fisika Latar Belakang (Evaluator C++)
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
 
-            if (typeof imu !== 'undefined' && imu && typeof imu.update === 'function') {
-                try { imu.update(); } catch (e) { /* imu update failed — ignore */ }
-            }
+            if (typeof imu !== 'undefined' && imu && typeof imu.update === 'function') { try { imu.update(); } catch (e) { } }
+            if (typeof maybeScheduleSave === 'function') { try { maybeScheduleSave(); } catch (e) { } }
 
-            if (typeof maybeScheduleSave === 'function') {
-                try { maybeScheduleSave(); } catch (e) { /* ignore save scheduling errors */ }
-            }
-
-            // Software mode tetap jalan walaupun GLB belum tersedia karena roda fallback langsung aktif.
-            if (wheelsLoaded < 4) {
-                try { updateSensors(); } catch (e) { }
-            }
+            if (wheelsLoaded < 4) { try { updateSensors(); } catch (e) { } }
 
             if (appMode === 'SOFTWARE') {
                 let gp = null;
                 if (gamepadIndex !== null) gp = navigator.getGamepads()[gamepadIndex];
                 if (!gp) {
-                    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-                    gp = Array.from(pads).find(Boolean);
-                    if (gp) {
-                        gamepadIndex = gp.index;
-                        document.getElementById('gp-status').innerHTML = `Terhubung: ${gp.id}`;
-                        document.getElementById('gp-status').style.color = "#00ff00";
-                    }
+                    const pads = navigator.getGamepads ? navigator.getGamepads() : []; gp = Array.from(pads).find(Boolean);
+                    if (gp) { gamepadIndex = gp.index; document.getElementById('gp-status').innerHTML = `Terhubung: ${gp.id}`; document.getElementById('gp-status').style.color = "#00ff00"; }
                 }
                 if (gp) {
                     let xVal = Math.abs(gp.axes[0]) > 0.1 ? gp.axes[0] : 0;
@@ -2193,16 +1149,11 @@ void loop() {
 
                     const y = -yVal; const x = xVal; let z = zRot;
 
-                    if (overlayVisible) {
-                        document.getElementById('val-input').innerHTML = `X:${x.toFixed(2)} | Y:${y.toFixed(2)} | Turn:${z.toFixed(2)}`;
-                    }
+                    if (overlayVisible) { document.getElementById('val-input').innerHTML = `X:${x.toFixed(2)} | Y:${y.toFixed(2)} | Turn:${z.toFixed(2)}`; }
 
                     const gyroRadian = imu.gyroZ;
                     const gyroDegree = (gyroRadian * 180 / Math.PI) % 360;
 
-                    // Simulasi angle-lock / gyro PID.
-                    // Kp/Ki/Kd bisa diubah di SIM_PID_SETTINGS atau input PID di monitor.
-                    // Saat stick kanan dipakai manual, target heading ikut di-set ulang.
                     const pidNow = performance.now();
                     const pidDt = clamp((pidNow - gyroPid.lastTime) / 1000, 0.001, 0.05);
                     gyroPid.lastTime = pidNow;
@@ -2210,54 +1161,30 @@ void loop() {
 
                     if (gyroPidEnabled) {
                         if (Math.abs(z) > 0.08) {
-                            gyroPid.targetYaw = robot.rotation.y;
-                            gyroPid.integral = 0;
-                            gyroPid.lastError = 0;
-                            gyroPid.hasLastError = false;
-                            gyroPid.output = 0;
+                            gyroPid.targetYaw = robot.rotation.y; gyroPid.integral = 0; gyroPid.lastError = 0; gyroPid.hasLastError = false; gyroPid.output = 0;
                         } else {
                             const err = wrapAngle(gyroPid.targetYaw - robot.rotation.y);
-                            gyroPid.integral = clamp(
-                                gyroPid.integral + err * pidDt,
-                                -SIM_PID_SETTINGS.maxIntegral,
-                                SIM_PID_SETTINGS.maxIntegral
-                            );
+                            gyroPid.integral = clamp(gyroPid.integral + err * pidDt, -SIM_PID_SETTINGS.maxIntegral, SIM_PID_SETTINGS.maxIntegral);
                             const derr = gyroPid.hasLastError ? (err - gyroPid.lastError) / pidDt : 0;
-                            gyroPid.output = clamp(
-                                gyroPid.kp * err + gyroPid.ki * gyroPid.integral + gyroPid.kd * derr,
-                                -SIM_PID_SETTINGS.maxOutput,
-                                SIM_PID_SETTINGS.maxOutput
-                            );
-                            gyroPid.lastError = err;
-                            gyroPid.hasLastError = true;
+                            gyroPid.output = clamp(gyroPid.kp * err + gyroPid.ki * gyroPid.integral + gyroPid.kd * derr, -SIM_PID_SETTINGS.maxOutput, SIM_PID_SETTINGS.maxOutput);
+                            gyroPid.lastError = err; gyroPid.hasLastError = true;
                             z += gyroPid.output;
                         }
                     } else {
-                        gyroPid.targetYaw = robot.rotation.y;
-                        gyroPid.integral = 0;
-                        gyroPid.lastError = 0;
-                        gyroPid.hasLastError = false;
-                        gyroPid.output = 0;
+                        gyroPid.targetYaw = robot.rotation.y; gyroPid.integral = 0; gyroPid.lastError = 0; gyroPid.hasLastError = false; gyroPid.output = 0;
                     }
 
                     updatePidMonitor();
 
                     let cosT = Math.cos(gyroRadian);
                     let sinT = Math.sin(gyroRadian);
-
                     let localX = x * cosT + y * sinT;
                     let localY = -x * sinT + y * cosT;
 
-                    // Sensor safety: kalau sensor dekat, gerakan ke arah obstacle otomatis dimatikan.
                     const safeCmd = applySensorSafety(localX, localY);
-                    localX = safeCmd.x;
-                    localY = safeCmd.y;
+                    localX = safeCmd.x; localY = safeCmd.y;
 
-                    let fl = localY + localX + z;
-                    let fr = localY - localX - z;
-                    let rl = localY - localX + z;
-                    let rr = localY + localX - z;
-
+                    let fl = localY + localX + z; let fr = localY - localX - z; let rl = localY - localX + z; let rr = localY + localX - z;
                     let maxV = Math.max(Math.abs(fl), Math.abs(fr), Math.abs(rl), Math.abs(rr));
                     if (maxV > 1.0) { fl /= maxV; fr /= maxV; rl /= maxV; rr /= maxV; }
 
@@ -2267,57 +1194,45 @@ void loop() {
                     let localActualY = (fl + fr + rl + rr) / 4;
                     let localActualX = (fl - fr - rl + rr) / 4;
                     const safeActual = applySensorSafety(localActualX, localActualY);
-                    localActualX = safeActual.x;
-                    localActualY = safeActual.y;
+                    localActualX = safeActual.x; localActualY = safeActual.y;
                     let actualZ = (fl - fr + rl - rr) / 4;
 
-                    let id_fl = localActualY + localActualX + actualZ;
-                    let id_fr = localActualY - localActualX - actualZ;
-                    let id_rl = localActualY - localActualX + actualZ;
-                    let id_rr = localActualY + localActualX - actualZ;
+                    let id_fl = localActualY + localActualX + actualZ; let id_fr = localActualY - localActualX - actualZ;
+                    let id_rl = localActualY - localActualX + actualZ; let id_rr = localActualY + localActualX - actualZ;
                     let slip = Math.abs(fl - id_fl) + Math.abs(fr - id_fr) + Math.abs(rl - id_rl) + Math.abs(rr - id_rr);
 
                     let globalActualX = localActualX * cosT - localActualY * sinT;
                     let globalActualY = localActualX * sinT + localActualY * cosT;
 
-                    robot.position.x += globalActualX * 0.002;
-                    robot.position.z -= globalActualY * 0.002;
-                    robot.rotation.y -= actualZ * 0.05;
+                    // Kecepatan Robot Ditingkatkan
+                    robot.position.x += globalActualX * 0.012;
+                    robot.position.z -= globalActualY * 0.012;
+                    robot.rotation.y -= actualZ * 0.12;
+
+                    // FISIKA RAMP: robot naik-turun + miring mengikuti bidang tanjakan.
+                    updateRobotGroundPose();
 
                     const slipUI = document.getElementById('val-slip');
 
                     if (slip > 0.1) {
-                        if (overlayVisible) {
-                            slipUI.innerHTML = `⚠️ STALL/SLIP (${slip.toFixed(2)})`;
-                            slipUI.style.color = "#ff3333";
-                        }
-
+                        if (overlayVisible) { slipUI.innerHTML = `âš ï¸ STALL/SLIP (${slip.toFixed(2)})`; slipUI.style.color = "#ff3333"; }
                         robot.position.x += (Math.random() - 0.5) * slip * 0.002;
                         robot.position.z += (Math.random() - 0.5) * slip * 0.002;
-
                         try {
                             if (gp.vibrationActuator && gp.vibrationActuator.type === "dual-rumble") {
-                                gp.vibrationActuator.playEffect("dual-rumble", {
-                                    startDelay: 0, duration: 50,
-                                    weakMagnitude: Math.min(slip / 4, 1.0), strongMagnitude: Math.min(slip / 4, 1.0)
-                                });
+                                gp.vibrationActuator.playEffect("dual-rumble", { startDelay: 0, duration: 50, weakMagnitude: Math.min(slip / 4, 1.0), strongMagnitude: Math.min(slip / 4, 1.0) });
                             }
                         } catch (e) { }
                     } else {
-                        if (overlayVisible) {
-                            slipUI.innerHTML = `Aman (0.00)`;
-                            slipUI.style.color = "#00ff00";
-                        }
+                        if (overlayVisible) { slipUI.innerHTML = `Aman (0.00)`; slipUI.style.color = "#32ffb1"; }
                     }
 
                     if (overlayVisible) {
-                        document.getElementById('val-actual').innerHTML = `Gerak X:${globalActualX.toFixed(2)} | Y:${globalActualY.toFixed(2)} | Gyro:${gyroDegree.toFixed(0)}° | Lift:${(robot.position.y * 1000).toFixed(0)}mm`;
-                        // Update encoder + pwm monitors (simulated)
+                        document.getElementById('val-actual').innerHTML = `Gerak X:${globalActualX.toFixed(2)} | Y:${globalActualY.toFixed(2)} | Gyro:${gyroDegree.toFixed(0)}Â° | Pitch:${(robot.rotation.x * 180 / Math.PI).toFixed(1)}Â° | Roll:${(robot.rotation.z * 180 / Math.PI).toFixed(1)}Â° | Lift:${(robot.position.y * 1000).toFixed(0)}mm`;
                         document.getElementById('enc-fl').innerText = Math.round(wheels[0].rotation.x * 100);
                         document.getElementById('enc-fr').innerText = Math.round(wheels[1].rotation.x * 100);
                         document.getElementById('enc-rl').innerText = Math.round(wheels[2].rotation.x * 100);
                         document.getElementById('enc-rr').innerText = Math.round(wheels[3].rotation.x * 100);
-
                         document.getElementById('pwm-fl').innerText = Math.round(fl * 255);
                         document.getElementById('pwm-fr').innerText = Math.round(fr * 255);
                         document.getElementById('pwm-rl').innerText = Math.round(rl * 255);
@@ -2330,11 +1245,11 @@ void loop() {
             renderer.render(scene, camera);
         }
 
-        // Load saved state (if any) then start animation
-        try { loadState(); } catch (e) { /* ignore load errors */ }
-
+        try { loadState(); } catch (e) { }
         animate();
     </script>
+    <script src="js/esp32-generator.js"></script>
 </body>
 
 </html>
+
