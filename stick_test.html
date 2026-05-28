@@ -720,21 +720,41 @@
 
         function applyEasyLayoutSettings() {
             const svg = document.getElementById('controller-svg');
+            const mobile = window.innerWidth <= 720;
             if (svg) {
-                svg.style.height = `${PAD_LAYOUT.controller.heightPercent}%`;
-                svg.style.top = `${PAD_LAYOUT.controller.topPercent}%`;
-                svg.style.left = `calc(50% + ${PAD_LAYOUT.controller.xShiftPercent}%)`;
-                svg.style.transform = 'translateX(-50%)';
-                svg.style.overflow = 'visible';
+                if (mobile) {
+                    svg.style.height = '';
+                    svg.style.top = '';
+                    svg.style.left = '';
+                    svg.style.transform = '';
+                    svg.style.overflow = '';
+                } else {
+                    svg.style.height = `${PAD_LAYOUT.controller.heightPercent}%`;
+                    svg.style.top = `${PAD_LAYOUT.controller.topPercent}%`;
+                    svg.style.left = `calc(50% + ${PAD_LAYOUT.controller.xShiftPercent}%)`;
+                    svg.style.transform = 'translateX(-50%)';
+                    svg.style.overflow = 'visible';
+                }
             }
 
             const leftTrig = document.querySelector('.trigger-zone.left');
-            if (leftTrig) { leftTrig.style.left = `${PAD_UI.triggerBar.leftX}px`; leftTrig.style.top = `${PAD_UI.triggerBar.top}px`; leftTrig.style.fontSize = `${PAD_UI.triggerBar.fontSize}px`; }
+            if (leftTrig) {
+                leftTrig.style.left = mobile ? '' : `${PAD_UI.triggerBar.leftX}px`;
+                leftTrig.style.top = mobile ? '' : `${PAD_UI.triggerBar.top}px`;
+                leftTrig.style.fontSize = mobile ? '' : `${PAD_UI.triggerBar.fontSize}px`;
+            }
 
             const rightTrig = document.querySelector('.trigger-zone.right');
-            if (rightTrig) { rightTrig.style.right = `${PAD_UI.triggerBar.rightX}px`; rightTrig.style.top = `${PAD_UI.triggerBar.top}px`; rightTrig.style.fontSize = `${PAD_UI.triggerBar.fontSize}px`; }
+            if (rightTrig) {
+                rightTrig.style.right = mobile ? '' : `${PAD_UI.triggerBar.rightX}px`;
+                rightTrig.style.top = mobile ? '' : `${PAD_UI.triggerBar.top}px`;
+                rightTrig.style.fontSize = mobile ? '' : `${PAD_UI.triggerBar.fontSize}px`;
+            }
 
-            document.querySelectorAll('.trigger-track').forEach(track => { track.style.height = `${PAD_UI.triggerBar.height}px`; track.style.width = `${PAD_UI.triggerBar.width}px`; });
+            document.querySelectorAll('.trigger-track').forEach(track => {
+                track.style.height = mobile ? '' : `${PAD_UI.triggerBar.height}px`;
+                track.style.width = mobile ? '' : `${PAD_UI.triggerBar.width}px`;
+            });
 
             syncAnalogCanvasSizes();
             applyBoxLayoutSettings();

@@ -164,11 +164,12 @@ body {
         }
 
         .btn-group {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(118px, max-content));
+            gap: 7px;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: end;
+            max-width: min(980px, calc(100vw - 360px));
         }
 
         .ui-btn {
@@ -180,9 +181,11 @@ body {
             border-radius: 6px;
             font-size: 12px;
             font-weight: bold;
+            min-height: 31px;
             pointer-events: auto;
             color: #e9ffff;
             text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
         }
 
         .ui-btn:hover {
@@ -214,7 +217,7 @@ body {
         }
 
         .esp-url-input {
-            width: 180px;
+            width: min(220px, 100%);
             height: 30px;
             border: 1px solid rgba(0, 209, 255, 0.28);
             border-radius: 7px;
@@ -517,43 +520,6 @@ body {
         }
 
 /* Page additions */
-.generator-panel {
-    padding: 12px;
-    border-bottom: 1px solid rgba(0, 209, 255, .12);
-    background: rgba(3, 9, 16, .58);
-}
-
-.generator-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.editor-flow {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(170px, 220px);
-    gap: 10px;
-    align-items: end;
-}
-
-.editor-flow strong,
-.editor-flow span {
-    display: block;
-}
-
-.editor-flow strong {
-    color: var(--accent-2);
-    font: 900 12px "Courier New", monospace;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-
-.editor-flow span {
-    margin-top: 4px;
-    color: #8fb2c9;
-    font: 700 11px/1.45 "Courier New", monospace;
-}
-
 .generator-field {
     display: grid;
     gap: 4px;
@@ -585,17 +551,41 @@ body {
     box-shadow: 0 0 14px rgba(50, 255, 177, .14);
 }
 
-.generator-actions {
-    display: flex;
+.editor-actionbar {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) repeat(3, max-content);
     gap: 8px;
-    margin-top: 10px;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(0, 209, 255, .12);
+    background: rgba(3, 9, 16, .58);
+}
+
+.editor-host-input {
+    min-width: 0;
+    height: 31px;
+    border: 1px solid rgba(0, 209, 255, .22);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .34);
+    color: #e9ffff;
+    font: 800 12px "Courier New", monospace;
+    padding: 0 9px;
+    outline: none;
+}
+
+.editor-host-input:focus {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 14px rgba(50, 255, 177, .14);
 }
 
 .generator-status {
-    min-height: 16px;
-    margin-top: 8px;
+    min-width: 0;
     color: #8fb2c9;
     font: 700 11px "Courier New", monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #left-panel .CodeMirror {
@@ -604,7 +594,8 @@ body {
 
 #right-panel>.header {
     min-height: 50px;
-    padding-right: 300px;
+    padding-right: 72px;
+    gap: 12px;
 }
 
 /* Floating simulator windows */
@@ -701,34 +692,37 @@ body {
     font-size: calc(13px * var(--panel-font-scale, 1));
 }
 
-.generator-panel {
-    flex: 0 0 auto;
-}
-
 @media (max-width: 900px) {
-    .generator-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .editor-flow {
-        grid-template-columns: 1fr;
-    }
-
     #canva-container {
         height: calc(100vh - 50px);
     }
 
     .btn-group {
-        justify-content: flex-start;
+        width: 100%;
+        max-width: none;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: stretch;
         padding-right: 0;
-        margin-top: 46px;
+    }
+
+    .btn-group .ui-btn,
+    .btn-group .esp-url-input {
+        width: 100%;
     }
 
     #right-panel>.header {
-        min-height: 96px;
-        padding-right: 10px;
+        min-height: 132px;
+        padding: 10px 72px 10px 10px;
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .editor-actionbar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .editor-host-input {
+        grid-column: 1 / -1;
     }
 
     #left-panel.floating-panel,

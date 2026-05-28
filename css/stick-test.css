@@ -50,41 +50,6 @@
             margin: 0 0 7px;
         }
 
-        .app-nav {
-            position: fixed;
-            top: 8px;
-            right: 14px;
-            z-index: 1200;
-            display: flex;
-            gap: 7px;
-            padding: 6px;
-            border: 1px solid rgba(39, 52, 71, .86);
-            border-radius: 10px;
-            background: rgba(5, 10, 17, .82);
-            box-shadow: 0 14px 34px rgba(0, 0, 0, .35);
-            backdrop-filter: blur(10px);
-        }
-
-        .app-nav a {
-            min-height: 28px;
-            padding: 0 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--line2);
-            border-radius: 7px;
-            color: var(--text);
-            text-decoration: none;
-            font: 800 12px Rajdhani, sans-serif;
-            background: rgba(7, 14, 23, .86);
-        }
-
-        .app-nav a:hover,
-        .app-nav a.active {
-            color: var(--green);
-            border-color: rgba(0, 240, 168, .72);
-        }
-
         #status-bar {
             width: min(100%, 1500px);
             height: 44px;
@@ -675,9 +640,9 @@
             }
 
             .app-nav {
-                position: static;
-                width: max-content;
-                margin: 0 auto 8px;
+                position: fixed;
+                width: auto;
+                margin: 0;
             }
 
             .dashboard {
@@ -868,7 +833,7 @@
 
     .pad-area {
         min-height: 310px;
-        overflow: visible;
+        overflow: hidden;
     }
 
     #controller-svg {

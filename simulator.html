@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/simulator.css">
-    
+
 </head>
 
 <body>
@@ -27,22 +27,12 @@
             <span style="color: #888; font-size: 11px;">mDNS / OTA-ready flow</span>
         </div>
         <div id="resizer" class="panel-resizer" title="Resize editor"></div>
-        <div class="generator-panel">
-            <div class="editor-flow">
-                <div>
-                    <strong>Firmware flow</strong>
-                    <span>Browser tidak compile Arduino langsung. Flash awal butuh firmware .bin; update berikutnya lewat OTA .bin setelah robot punya WiFi + mDNS.</span>
-                </div>
-                <label class="generator-field">mDNS host
-                    <input id="gen-ota-host" value="transporter-tc2026.local" autocomplete="off">
-                </label>
-            </div>
-            <div class="generator-actions">
-                <button id="copy-code-btn" class="ui-btn" type="button">COPY CODE</button>
-                <button id="serial-prep-btn" class="ui-btn" type="button">WEB SERIAL PREP</button>
-                <button id="ota-ready-btn" class="ui-btn" type="button">OTA .BIN READY</button>
-            </div>
-            <div id="generator-status" class="generator-status">Editor ready. Build firmware .bin dari Arduino CLI / PlatformIO sebelum flash.</div>
+        <div class="editor-actionbar">
+            <input id="gen-ota-host" class="editor-host-input" value="transporter-tc2026.local" autocomplete="off"
+                aria-label="mDNS host">
+            <button id="copy-code-btn" class="ui-btn" type="button">COPY</button>
+            <button id="serial-prep-btn" class="ui-btn" type="button">WEB SERIAL</button>
+            <button id="ota-ready-btn" class="ui-btn" type="button">OTA .BIN</button>
         </div>
         <textarea id="cpp-editor">
 /*
@@ -606,6 +596,10 @@ void loop() {
                 return m;
             }
 
+            function addWallRectCm(xCm, yCm, wCm, hCm, name = 'pixel-wall', heightM = 0.08, mat = wallMat) {
+                return addBoxCm(xCm, yCm, Math.max(wCm, 1), Math.max(hCm, 1), heightM, mat, name, true, false);
+            }
+
             function addRampWedgeCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'ramp-wedge', direction = 'high_z0') {
                 const w = wCm * cm; const d = hCm * cm;
                 const x0 = -w / 2, x1 = w / 2;
@@ -670,26 +664,9 @@ void loop() {
             addRampWedgeCm(150, 94, 35, 12, 0.05, rampLightMat, 'upper-light-ramp', 'high_z0');
             addRampWedgeCm(150, 206, 35, 12, 0.05, rampLightMat, 'lower-light-ramp', 'high_z1');
 
-            // Tembok Maze Lapangan
-            const wallLines = window.TC2026_TRACK?.wallSegmentsCm || [
-                // Kiri Atas
-                [20, 25, 85, 25], [40, 25, 40, 90], [0, 90, 40, 90], [85, 25, 85, 50],
-                [85, 50, 132.5, 50], [60, 95, 90, 95], [60, 95, 60, 140], [60, 140, 110, 140],
-                [110, 115, 110, 140], [60, 120, 80, 120],
-                // Kanan Atas
-                [260, 0, 260, 25], [260, 25, 300, 25], [170, 30, 195, 55], [195, 55, 195, 120],
-                [195, 55, 260, 55], [195, 120, 245, 120], [245, 80, 245, 120], [220, 80, 245, 80],
-                [250, 130, 280, 100], [195, 120, 195, 160], [195, 160, 250, 160], [250, 160, 280, 190],
-                // Kiri Bawah
-                [0, 175, 50, 175], [60, 195, 100, 195], [100, 160, 100, 205], [100, 205, 120, 205],
-                [50, 210, 50, 260], [50, 210, 100, 210], [100, 210, 100, 240], [50, 260, 130, 260],
-                [100, 280, 130, 260], [20, 280, 100, 280], [20, 230, 20, 280], [20, 230, 60, 230],
-                // Kanan Bawah
-                [180, 280, 250, 280], [250, 240, 250, 280], [230, 240, 250, 240], [190, 210, 190, 280],
-                [190, 210, 250, 210], [250, 190, 250, 210], [210, 180, 250, 180], [210, 180, 210, 200],
-                [280, 130, 300, 110], [280, 160, 300, 140]
-            ];
-            wallLines.forEach((l, idx) => addWallLineCm(...l, `inner-wall-${idx}`, 2.4, 0.08, wallMat));
+            // Tembok maze diekstrusi dari pixel garis hitam texture, bukan koordinat kira-kira.
+            const wallRects = window.TC2026_TRACK?.wallRectsCm || [];
+            wallRects.forEach((r, idx) => addWallRectCm(...r, `pixel-wall-${idx}`, 0.08, wallMat));
 
             addDropZoneAndBox('blue', 122.9, 134.3, 'blue');
             addDropZoneAndBox('orange', 206.9, 214.4, 'orange');
@@ -1335,4 +1312,3 @@ void loop() {
 </body>
 
 </html>
-
