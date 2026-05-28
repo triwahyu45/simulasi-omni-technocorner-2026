@@ -212,9 +212,9 @@
             // GESER GLOBAL STICK / GAMBAR CONTROLLER UTAMA
             // heightPercent = ukuran controller, topPercent = turun/naik, xShiftPercent = kiri/kanan
             controller: {
-                heightPercent: 90,
-                topPercent: 2,
-                xShiftPercent: -20
+                heightPercent: 88,
+                topPercent: 3.5,
+                xShiftPercent: 0
             },
 
             body: { strokeWidth: 3 },
@@ -296,8 +296,8 @@
             rightAxisText: { left: 120, top: 20, width: 60, gap: 3, align: 'left' },
 
             triggerBar: {
-                leftX: 5,
-                rightX: 440,
+                leftX: 8,
+                rightX: 8,
                 top: 55,
                 height: 150,
                 width: 23,
@@ -608,114 +608,19 @@
         }
 
         function applyBoxLayoutSettings() {
-            if (window.innerWidth <= 1250) {
-                const resetStyle = (el) => {
-                    if (!el) return;
-                    ['transform', 'width', 'height', 'maxHeight', 'gridTemplateColumns', 'gridTemplateRows', 'gap', 'alignItems', 'alignSelf', 'padding', 'overflow'].forEach(prop => {
-                        el.style[prop] = '';
-                    });
-                };
-                resetStyle(document.getElementById('status-bar'));
-                resetStyle(document.querySelector('.dashboard'));
-                resetStyle(document.querySelector('.side-panel'));
-                resetStyle(document.querySelector('.tools-grid'));
-                document.querySelectorAll('.tool-card').forEach(resetStyle);
-                return;
-            }
-
-            const g = UI_BOX_LAYOUT.global;
-            document.body.style.setProperty('--box-global-font-size', `${g.textFontSize}px`);
-
-            const status = document.getElementById('status-bar');
-            if (status) {
-                status.style.transform = `translate(${UI_BOX_LAYOUT.statusBar.dx}px, ${UI_BOX_LAYOUT.statusBar.dy}px)`;
-                status.style.height = `${UI_BOX_LAYOUT.statusBar.height}px`;
-                status.style.fontSize = `${UI_BOX_LAYOUT.statusBar.fontSize}px`;
-            }
-
-            const dashboard = document.querySelector('.dashboard');
-            if (dashboard) {
-                dashboard.style.gap = `${g.gap}px`;
-                dashboard.style.gridTemplateColumns = `minmax(880px, 1fr) ${UI_BOX_LAYOUT.buttonPanel.width}px`;
-                dashboard.style.gridTemplateRows = `minmax(0, 1fr) ${UI_BOX_LAYOUT.toolsGrid.rowHeight}px ${UI_BOX_LAYOUT.footer.height}px`;
-                dashboard.style.height = `calc(100vh - 96px)`;
-                dashboard.style.maxHeight = `calc(100vh - 96px)`;
-                dashboard.style.transform = `translate(${g.dx}px, ${g.dy}px) scale(${g.scale})`;
-                dashboard.style.transformOrigin = 'top center';
-            }
-
-            const side = document.querySelector('.side-panel');
-            if (side) {
-                const b = UI_BOX_LAYOUT.buttonPanel;
-                side.style.transform = `translate(${b.dx}px, ${b.dy}px) scale(${b.scale})`;
-                side.style.transformOrigin = 'top left';
-                side.style.width = `${b.width}px`;
-                side.style.height = `${b.height}px`;
-                side.style.padding = `${b.padding}px`;
-                side.style.alignSelf = 'start';
-                side.style.overflow = 'hidden';
-                const title = side.querySelector('.section-label');
-                if (title) title.style.fontSize = `${b.titleFontSize}px`;
-                const track = side.querySelector('.btn-track');
-                if (track) track.style.gap = `${b.chipGapY}px ${b.chipGapX}px`;
-                side.querySelectorAll('.btn-chip').forEach(chip => {
-                    chip.style.height = `${b.chipHeight}px`;
-                    chip.style.fontSize = `${b.buttonFontSize}px`;
+            const resetStyle = (el) => {
+                if (!el) return;
+                ['transform', 'width', 'height', 'maxHeight', 'gridTemplateColumns', 'gridTemplateRows', 'gap', 'alignItems', 'alignSelf', 'padding', 'overflow', 'fontSize', 'minHeight'].forEach(prop => {
+                    el.style[prop] = '';
                 });
-            }
-
-            const tools = document.querySelector('.tools-grid');
-            if (tools) {
-                const tg = UI_BOX_LAYOUT.toolsGrid;
-                tools.style.gap = `${tg.gap}px`;
-                tools.style.alignItems = 'start';
-                tools.style.transform = `translate(${tg.dx}px, ${tg.dy}px) scale(${tg.scale})`;
-                tools.style.transformOrigin = 'top left';
-
-                const b = UI_BOX_LAYOUT.boxes;
-                const inputWidth = b.inputSummary.width === 1 ? '1fr' : `${b.inputSummary.width}px`;
-                tools.style.gridTemplateColumns = `${b.analogPath.width}px ${b.circularity.width}px ${b.vibration.width}px ${b.axisValues.width}px ${inputWidth}`;
-
-                const cards = tools.querySelectorAll('.tool-card');
-                const names = ['analogPath', 'circularity', 'vibration', 'axisValues', 'inputSummary'];
-
-                cards.forEach((card, idx) => {
-                    const cfg = b[names[idx]];
-                    if (!cfg) return;
-                    card.style.transform = `translate(${cfg.dx}px, ${cfg.dy}px) scale(${cfg.scale})`;
-                    card.style.transformOrigin = 'top left';
-                    card.style.width = `${cfg.width}px`;
-                    card.style.height = `${cfg.height}px`;
-                    card.style.padding = `${cfg.padding}px`;
-                    card.style.overflow = 'auto';
-                    card.style.alignSelf = 'start';
-
-                    const title = card.querySelector('.tool-title');
-                    if (title) title.style.fontSize = `${cfg.titleFontSize}px`;
-                    card.querySelectorAll('.legend, .metric, .mini-circ, .axis-list, .summary-list, .poll-box').forEach(el => {
-                        el.style.fontSize = `${cfg.fontSize}px`;
-                    });
-                    if (cfg.miniCanvasSize) {
-                        card.querySelectorAll('.mini-circ canvas').forEach(canvas => {
-                            canvas.style.width = `${cfg.miniCanvasSize}px`;
-                            canvas.style.height = `${cfg.miniCanvasSize}px`;
-                        });
-                    }
-                    card.querySelectorAll('.ui-btn').forEach(btn => {
-                        btn.style.fontSize = `${cfg.buttonFontSize ?? UI_BOX_LAYOUT.global.buttonFontSize}px`;
-                        btn.style.minHeight = `${cfg.buttonHeight ?? 28}px`;
-                        btn.style.padding = cfg.buttonPadding ?? '4px 9px';
-                    });
-                });
-            }
-
-            const footer = document.querySelector('.footer-bar');
-            if (footer) {
-                const f = UI_BOX_LAYOUT.footer;
-                footer.style.transform = `translate(${f.dx}px, ${f.dy}px)`;
-                footer.style.height = `${f.height}px`;
-                footer.style.fontSize = `${f.fontSize}px`;
-            }
+            };
+            resetStyle(document.getElementById('status-bar'));
+            resetStyle(document.querySelector('.dashboard'));
+            resetStyle(document.querySelector('.side-panel'));
+            resetStyle(document.querySelector('.tools-grid'));
+            resetStyle(document.querySelector('.footer-bar'));
+            document.querySelectorAll('.tool-card').forEach(resetStyle);
+            document.querySelectorAll('.btn-chip, .tool-card .ui-btn, .legend, .metric, .mini-circ, .axis-list, .summary-list, .poll-box, .tool-title').forEach(resetStyle);
         }
 
         function applyEasyLayoutSettings() {

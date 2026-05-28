@@ -213,6 +213,7 @@ void loop() {
                 </div>
                 <span id="val-safe" class="status-pill safe">AMAN</span>
             </div>
+            <div class="floating-content">
 
             <div class="monitor-card primary-card">
                 <div class="card-title">Mode & Connection</div>
@@ -314,8 +315,9 @@ void loop() {
 
                 <div class="monitor-card compact-card">
                     <div class="card-title">Slip / Stall</div>
-                    <div id="val-slip" class="slip-value">Software mode siap</div>
+                <div id="val-slip" class="slip-value">Software mode siap</div>
                 </div>
+            </div>
             </div>
             <div id="info-resizer" class="panel-resizer" title="Resize info"></div>
         </div>
@@ -597,7 +599,8 @@ void loop() {
             }
 
             function addWallRectCm(xCm, yCm, wCm, hCm, name = 'pixel-wall', heightM = 0.08, mat = wallMat) {
-                return addBoxCm(xCm, yCm, Math.max(wCm, 1), Math.max(hCm, 1), heightM, mat, name, true, false);
+                const minWall = window.TC2026_TRACK?.wallThicknessCm || 1.8;
+                return addBoxCm(xCm, yCm, Math.max(wCm, minWall), Math.max(hCm, minWall), heightM, mat, name, true, false);
             }
 
             function addRampWedgeCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'ramp-wedge', direction = 'high_z0') {
@@ -665,8 +668,13 @@ void loop() {
             addRampWedgeCm(150, 206, 35, 12, 0.05, rampLightMat, 'lower-light-ramp', 'high_z1');
 
             // Tembok maze diekstrusi dari pixel garis hitam texture, bukan koordinat kira-kira.
-            const wallRects = window.TC2026_TRACK?.wallRectsCm || [];
+            const isOuterEdgeRect = ([x, y, w, h]) => {
+                const left = x - w / 2, right = x + w / 2, top = y - h / 2, bottom = y + h / 2;
+                return left <= 1.1 || right >= 298.9 || top <= 1.1 || bottom >= 298.9;
+            };
+            const wallRects = (window.TC2026_TRACK?.wallRectsCm || []).filter((rect) => !isOuterEdgeRect(rect));
             wallRects.forEach((r, idx) => addWallRectCm(...r, `pixel-wall-${idx}`, 0.08, wallMat));
+            (window.TC2026_TRACK?.supplementalWallRectsCm || []).forEach((r, idx) => addWallRectCm(...r, `supplemental-wall-${idx}`, 0.08, wallMat));
 
             addDropZoneAndBox('blue', 122.9, 134.3, 'blue');
             addDropZoneAndBox('orange', 206.9, 214.4, 'orange');
