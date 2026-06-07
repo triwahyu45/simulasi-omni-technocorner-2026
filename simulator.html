@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>ESP32 WiFi Transporter TC 2026 Monitor</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+    <link rel="stylesheet" href="vendor/codemirror/codemirror.min.css">
+    <link rel="stylesheet" href="vendor/codemirror/theme/monokai.min.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/simulator.css">
 
@@ -206,11 +206,41 @@ void loop() {
                 <button id="reset-robot-btn" class="ui-btn">RESET ROBOT</button>
             </div>
         </div>
-        <div class="view-cube" aria-label="Camera view cube">
-            <button type="button" data-view="top">Top</button>
-            <button type="button" data-view="start">Front</button>
-            <button type="button" data-view="left">Left</button>
-            <button type="button" data-view="right">Right</button>
+        <section id="race-hud" class="race-hud" aria-label="Race mode Transporter Technocorner 2026">
+            <div class="race-primary">
+                <label class="race-round-label">
+                    <span>Babak</span>
+                    <select id="race-round-select" class="race-select">
+                        <option value="penyisihan">Penyisihan</option>
+                        <option value="32besar">32 Besar</option>
+                        <option value="16besar">16 Besar</option>
+                        <option value="8besar">8 Besar</option>
+                        <option value="semifinal">Semifinal</option>
+                        <option value="final">Final</option>
+                    </select>
+                </label>
+                <div class="race-timer" id="race-timer">03:00</div>
+                <div class="race-score">
+                    <span>Score</span>
+                    <b id="race-score-value">0</b>
+                </div>
+                <div class="race-retry">
+                    <span>Retry</span>
+                    <b id="race-retry-value">0 / 3</b>
+                </div>
+                <div class="race-status" id="race-status">READY</div>
+            </div>
+            <div class="race-actions">
+                <button id="race-start-btn" class="ui-btn race-btn">START RACE</button>
+                <button id="race-pause-btn" class="ui-btn race-btn">PAUSE</button>
+                <button id="race-reset-btn" class="ui-btn race-btn">RESET RACE</button>
+                <button id="race-retry-btn" class="ui-btn race-btn">RETRY</button>
+                <button id="race-finish-btn" class="ui-btn race-btn finish-btn">MARK FINISH</button>
+            </div>
+            <div id="race-checklist" class="race-checklist" aria-label="Manual scoring checklist"></div>
+        </section>
+        <div class="view-cube" id="view-cube-container" aria-label="Interactive camera view cube">
+            <canvas id="viewCubeCanvas" width="140" height="140"></canvas>
         </div>
         <div id="status-overlay" class="monitor-panel floating-panel panel-hidden">
             <div class="monitor-top">
@@ -331,16 +361,17 @@ void loop() {
         <div id="canva-container"></div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+    <script src="vendor/three/three.min.js"></script>
+    <script src="vendor/three/OrbitControls.js"></script>
+    <script src="vendor/three/GLTFLoader.js"></script>
+    <script src="vendor/codemirror/codemirror.min.js"></script>
+    <script src="vendor/codemirror/mode/clike/clike.min.js"></script>
     <script src="js/track-data.js"></script>
 
     <script>
         // Array global untuk dideteksi oleh Raycaster gravitasi (Y-Axis)
         const floorObjects = [];
+        const officialFloorObjects = [];
 
         // 1. Inisialisasi UI Toggles & Editor
         const leftPanel = document.getElementById('left-panel');
@@ -553,7 +584,7 @@ void loop() {
 
         const CAMERA_PRESETS = {
             top: { pos: [0, 4.1, 0.001], target: [0, 0, 0] },
-            start: { pos: [0, 0.72, 1.36], target: [0, 0.02, 0.78] },
+            start: { pos: [0, 0.42, 1.78], target: [0, 0.045, 1.33] },
             center: { pos: [-0.78, 0.82, 0.28], target: [0, 0.035, 0.02] },
             finish: { pos: [0, 0.68, -1.18], target: [0, 0.035, -1.40] },
             left: { pos: [-1.33, 0.72, 0.12], target: [-0.42, 0.025, 0.02] },
@@ -589,11 +620,59 @@ void loop() {
         const track3DGroup = new THREE.Group();
         track3DGroup.name = 'track-3d-debug-layer';
         scene.add(track3DGroup);
+        const proceduralArenaGroup = new THREE.Group();
+        proceduralArenaGroup.name = 'procedural-arena-fallback';
+        track3DGroup.add(proceduralArenaGroup);
+        const officialArenaGroup = new THREE.Group();
+        officialArenaGroup.name = 'official-land-of-tptc';
+        officialArenaGroup.visible = false;
+        track3DGroup.add(officialArenaGroup);
+        const gameObjectGroup = new THREE.Group();
+        gameObjectGroup.name = 'simulated-game-objects';
+        track3DGroup.add(gameObjectGroup);
+        const gameObjectsByColor = {};
+        const obstacleObjects = [];
+        let activeTrackLayer = 'procedural';
         let track3DVisible = true;
+        let simGyroReady = false;
+        let robotGroundReady = false;
+        const OFFICIAL_ARENA_YAW = Math.PI;
+        const OFFICIAL_START_POSE = {
+            x: 0,
+            y: 0.04,
+            z: 1.34,
+            yaw: 0
+        };
+        const FALLBACK_START_POSE = {
+            x: 0,
+            y: 0.03,
+            z: 1.375,
+            yaw: 0
+        };
+
+        function getStartPose() {
+            return activeTrackLayer === 'official' ? OFFICIAL_START_POSE : FALLBACK_START_POSE;
+        }
+
+        function setOfficialArenaActive(active) {
+            activeTrackLayer = active ? 'official' : 'procedural';
+            officialArenaGroup.visible = active && track3DVisible;
+            proceduralArenaGroup.visible = !active && track3DVisible;
+            const slipEl = document.getElementById('val-slip');
+            if (slipEl) {
+                slipEl.innerHTML = active
+                    ? 'Arena resmi GLB aktif<br><small style="font-size:11px;color:#9db6c9;">Land of TPTC.glb</small>'
+                    : 'Arena prosedural fallback aktif';
+                slipEl.style.color = active ? '#32ffb1' : '#ffd166';
+            }
+            if (active && robot) resetRobotToStart();
+        }
 
         function setTrack3DVisible(visible) {
             track3DVisible = visible;
             track3DGroup.visible = visible;
+            officialArenaGroup.visible = activeTrackLayer === 'official' && visible;
+            proceduralArenaGroup.visible = activeTrackLayer === 'procedural' && visible;
             const btn = document.getElementById('toggle-3d-btn');
             if (btn) {
                 btn.textContent = visible ? '3D ON' : '3D OFF';
@@ -612,13 +691,14 @@ void loop() {
             const cm = 0.01;
             const cmX = (x) => (x - 150) * cm;
             const cmZ = (y) => (y - 150) * cm;
+            const rotateOfficialCm = (x, y) => ({ x: 300 - x, y: 300 - y });
 
             const trackTexture = new THREE.TextureLoader().load('Web_Assets/track_tc2026_clean.png');
             trackTexture.encoding = THREE.sRGBEncoding;
             trackTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
             const fieldMat = new THREE.MeshPhongMaterial({
-                color: 0xbec3c0, map: trackTexture, shininess: 0
+                color: 0x3a3f47, map: trackTexture, shininess: 8
             });
             const edgeMat = new THREE.LineBasicMaterial({ color: 0xd8f3ff, transparent: true, opacity: 0.34 });
             const wallMat = new THREE.MeshPhongMaterial({
@@ -642,14 +722,14 @@ void loop() {
                 return new THREE.MeshPhongMaterial({ color: c.hex ?? c, emissive: 0x222222, transparent: opacity < 1, opacity, shininess: 24 });
             }
 
-            function addMeshEdges(mesh, thresholdAngle = 18) {
+            function addMeshEdges(mesh, thresholdAngle = 18, targetGroup = proceduralArenaGroup) {
                 const edgeGeo = new THREE.EdgesGeometry(mesh.geometry, thresholdAngle);
                 const edge = new THREE.LineSegments(edgeGeo, edgeMat);
                 edge.position.copy(mesh.position);
                 edge.rotation.copy(mesh.rotation);
                 edge.scale.copy(mesh.scale);
                 edge.name = `${mesh.name}-wire-edge`;
-                track3DGroup.add(edge);
+                targetGroup.add(edge);
                 return edge;
             }
 
@@ -677,18 +757,18 @@ void loop() {
                 m.rotation.x = -Math.PI / 2;
                 m.position.set(cmX(xCm), yM, cmZ(yCm));
                 m.name = name;
-                (inTrack3D ? track3DGroup : scene).add(m);
+                (inTrack3D ? proceduralArenaGroup : scene).add(m);
                 floorObjects.push(m);
                 return m;
             }
 
-            function addBoxCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'track-box', detectable = false, isFloor = false) {
+            function addBoxCm(xCm, yCm, wCm, hCm, heightM, mat, name = 'track-box', detectable = false, isFloor = false, targetGroup = proceduralArenaGroup) {
                 const g = new THREE.BoxGeometry(wCm * cm, heightM, hCm * cm);
                 const m = new THREE.Mesh(g, mat);
                 m.position.set(cmX(xCm), heightM / 2, cmZ(yCm));
                 m.name = name;
-                track3DGroup.add(m);
-                addMeshEdges(m);
+                targetGroup.add(m);
+                addMeshEdges(m, 18, targetGroup);
                 if (detectable) tofObjects.push(m);
                 if (isFloor) floorObjects.push(m);
                 return m;
@@ -706,7 +786,7 @@ void loop() {
                 m.position.set(cmX((x1 + x2) / 2), heightM / 2, cmZ((y1 + y2) / 2));
                 m.rotation.y = Math.atan2(dz, dx);
                 m.name = name;
-                track3DGroup.add(m);
+                proceduralArenaGroup.add(m);
                 addMeshEdges(m);
                 tofObjects.push(m);
                 return m;
@@ -744,18 +824,27 @@ void loop() {
                 const m = new THREE.Mesh(g, mat);
                 m.position.set(cmX(xCm), 0, cmZ(yCm));
                 m.name = name;
-                track3DGroup.add(m);
+                proceduralArenaGroup.add(m);
                 addMeshEdges(m, 8);
                 floorObjects.push(m);
                 return m;
             }
 
             function addDropZoneAndBox(colorKey, xCm, yCm, label, isObstacle = false) {
+                const p = rotateOfficialCm(xCm, yCm);
                 const c = colors[colorKey];
-                const box = addBoxCm(xCm, yCm, 10, 10, 0.10, makeMat(c, 1), `${label}-box-10x10x10cm`, true, false);
+                const box = addBoxCm(p.x, p.y, 10, 10, 0.10, makeMat(c, 1), `${label}-box-10x10x10cm`, true, false, gameObjectGroup);
+                box.userData.sourceCm = { x: xCm, y: yCm };
+                box.userData.worldCm = p;
                 box.userData.isTransporterBox = true;
                 box.userData.colorKey = colorKey;
                 box.userData.isObstacleBox = isObstacle;
+                if (isObstacle) {
+                    obstacleObjects.push(box);
+                } else {
+                    if (!gameObjectsByColor[colorKey]) gameObjectsByColor[colorKey] = [];
+                    gameObjectsByColor[colorKey].push(box);
+                }
                 return box;
             }
 
@@ -796,15 +885,151 @@ void loop() {
             addDropZoneAndBox('yellow', 17.3, 51.9, 'yellow');
             addDropZoneAndBox('purple', 252.1, 44.8, 'purple');
             addDropZoneAndBox('pink', 11.3, 289.7, 'pink');
+            addDropZoneAndBox('red', 72, 151, 'red-obstacle-1', true);
+            addDropZoneAndBox('red', 229, 149, 'red-obstacle-2', true);
+            addDropZoneAndBox('red', 251, 254, 'red-obstacle-3', true);
         }
         createArena();
 
-        const robot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.015, 0.1), new THREE.MeshPhongMaterial({ color: 0x444444 }));
+        function loadOfficialArenaGlb() {
+            const officialPath = 'Web_Assets/Land_of_TPTC.glb';
+            const officialLoader = new THREE.GLTFLoader();
+            officialLoader.load(officialPath, (gltf) => {
+                const root = gltf.scene;
+                root.name = 'Land of TPTC official arena';
+                officialArenaGroup.rotation.y = OFFICIAL_ARENA_YAW;
+                const officialEdgeMat = new THREE.LineBasicMaterial({ color: 0x07090b, transparent: true, opacity: 0.62 });
+                const officialMat = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    vertexColors: true,
+                    side: THREE.DoubleSide
+                });
 
-        // START Posisi. Karena kamera ada di Z positif dan FINISH ada di Z negatif, 
-        // rotasi Y=0 berarti robot sudah lurus menghadap FINISH (-Z axis).
-        robot.position.set(0, 0.03, 1.375);
-        robot.rotation.y = 0;
+                function remapOfficialVertexColors(mesh) {
+                    const colorAttr = mesh.geometry?.attributes?.color;
+                    if (!colorAttr) return;
+                    const nextColors = new Float32Array(colorAttr.array.length);
+                    for (let i = 0; i < colorAttr.count; i++) {
+                        const r = colorAttr.getX(i);
+                        const g = colorAttr.getY(i);
+                        const b = colorAttr.getZ(i);
+                        const max = Math.max(r, g, b);
+                        const min = Math.min(r, g, b);
+                        const sat = max - min;
+                        const idx = i * 3;
+
+                        if (max > 0.82 && sat < 0.08) {
+                            nextColors[idx] = 0.58;
+                            nextColors[idx + 1] = 0.60;
+                            nextColors[idx + 2] = 0.60;
+                        } else if (max < 0.34) {
+                            nextColors[idx] = 0.025;
+                            nextColors[idx + 1] = 0.028;
+                            nextColors[idx + 2] = 0.030;
+                        } else if (sat < 0.10) {
+                            const v = THREE.MathUtils.clamp(max * 0.58, 0.22, 0.42);
+                            nextColors[idx] = v;
+                            nextColors[idx + 1] = v;
+                            nextColors[idx + 2] = v;
+                        } else {
+                            nextColors[idx] = THREE.MathUtils.clamp(r * 0.96, 0, 1);
+                            nextColors[idx + 1] = THREE.MathUtils.clamp(g * 0.96, 0, 1);
+                            nextColors[idx + 2] = THREE.MathUtils.clamp(b * 0.96, 0, 1);
+                        }
+                    }
+                    mesh.geometry = mesh.geometry.clone();
+                    mesh.geometry.setAttribute('color', new THREE.BufferAttribute(nextColors, 3));
+                }
+
+                root.traverse((obj) => {
+                    if (!obj.isMesh) return;
+                    obj.castShadow = false;
+                    obj.receiveShadow = true;
+                    remapOfficialVertexColors(obj);
+                    obj.material = officialMat;
+                    officialFloorObjects.push(obj);
+                });
+
+                const box = new THREE.Box3().setFromObject(root);
+                const size = box.getSize(new THREE.Vector3());
+                const center = box.getCenter(new THREE.Vector3());
+                const maxXZ = Math.max(size.x, size.z);
+                const maxXYZ = Math.max(size.x, size.y, size.z);
+                const scale = maxXZ > 0 ? 3.0 / maxXZ : 3.0 / maxXYZ;
+
+                root.position.sub(center);
+                root.scale.setScalar(scale);
+
+                const fittedBox = new THREE.Box3().setFromObject(root);
+                root.position.y -= fittedBox.min.y;
+
+                officialArenaGroup.add(root);
+
+                root.updateMatrixWorld(true);
+                root.traverse((obj) => {
+                    if (!obj.isMesh) return;
+                    const edge = new THREE.LineSegments(new THREE.EdgesGeometry(obj.geometry, 18), officialEdgeMat);
+                    edge.matrixAutoUpdate = false;
+                    edge.matrix.copy(obj.matrixWorld);
+                    edge.name = `${obj.name || 'official-arena'}-wire-edge`;
+                    officialArenaGroup.add(edge);
+                });
+
+                const boundary = new THREE.Group();
+                boundary.name = 'official-arena-perimeter';
+                const boundaryMat = new THREE.MeshPhongMaterial({ color: 0x060708, emissive: 0x000000, shininess: 18 });
+                const boundaryHeight = 0.028;
+                const boundaryThick = 0.025;
+                [
+                    [0, 0, 3.06, boundaryThick],
+                    [0, 0, boundaryThick, 3.06],
+                    [0, 1.515, 3.06, boundaryThick],
+                    [0, -1.515, 3.06, boundaryThick],
+                    [1.515, 0, boundaryThick, 3.06],
+                    [-1.515, 0, boundaryThick, 3.06]
+                ].slice(2).forEach(([x, z, w, d], idx) => {
+                    const m = new THREE.Mesh(new THREE.BoxGeometry(w, boundaryHeight, d), boundaryMat);
+                    m.position.set(x, boundaryHeight / 2 + 0.003, z);
+                    m.name = `official-boundary-${idx}`;
+                    boundary.add(m);
+                });
+                officialArenaGroup.add(boundary);
+                setOfficialArenaActive(true);
+            }, undefined, (error) => {
+                console.warn('Land of TPTC.glb gagal dimuat, fallback ke arena prosedural.', error);
+                setOfficialArenaActive(false);
+            });
+        }
+        loadOfficialArenaGlb();
+
+        const robot = new THREE.Mesh(new THREE.BoxGeometry(0.115, 0.026, 0.115), new THREE.MeshPhongMaterial({
+            color: 0x07131d,
+            emissive: 0x003a4a,
+            emissiveIntensity: 0.8,
+            shininess: 42
+        }));
+
+        function resetRobotToStart() {
+            const pose = getStartPose();
+            robot.position.set(pose.x, pose.y, pose.z);
+            robot.rotation.set(0, pose.yaw, 0);
+            try {
+                if (robotGroundReady && typeof snapRobotToGroundPose === 'function') snapRobotToGroundPose();
+            } catch (err) {
+                console.warn('Robot start snap gagal:', err);
+            }
+            if (simGyroReady) {
+                gyroPid.targetYaw = robot.rotation.y;
+                gyroPid.integral = 0;
+                gyroPid.lastError = 0;
+                gyroPid.hasLastError = false;
+                gyroPid.output = 0;
+            }
+        }
+
+        // START resmi mengikuti orientasi Land_of_TPTC.glb saat arena official aktif.
+        robot.position.set(FALLBACK_START_POSE.x, FALLBACK_START_POSE.y, FALLBACK_START_POSE.z);
+        robot.rotation.y = FALLBACK_START_POSE.yaw;
         scene.add(robot);
 
         const frontMark = new THREE.Group();
@@ -840,7 +1065,7 @@ void loop() {
         robot.add(frontLabel);
 
         robot.material.emissive = new THREE.Color(0x003a4a);
-        robot.material.emissiveIntensity = 0.6;
+        robot.material.emissiveIntensity = 0.8;
 
         const tofMax = 2000;
         const sensors = { front: { mm: tofMax + 1 }, right: { mm: tofMax + 1 }, back: { mm: tofMax + 1 }, left: { mm: tofMax + 1 }, minAvoidMm: 120 };
@@ -895,6 +1120,230 @@ void loop() {
         }
 
         function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+
+        const RACE_STORAGE_KEY = 'transporter_tc2026_race_mode_v1';
+        const RACE_MAX_RETRY = 3;
+        const RACE_BOXES = {
+            orange: { label: 'Jingga', points: 1, color: '#ffaa19' },
+            pink: { label: 'Pink', points: 2, color: '#e767e6' },
+            blue: { label: 'Biru Tua', points: 2, color: '#5658ff' },
+            purple: { label: 'Ungu', points: 3, color: '#b916c7' },
+            yellow: { label: 'Kuning', points: 3, color: '#f5ee18' }
+        };
+        const RACE_ROUNDS = {
+            penyisihan: { label: 'Penyisihan', duration: 180, boxes: ['orange', 'pink', 'blue'], obstacles: 0, advance: '32 Besar' },
+            '32besar': { label: '32 Besar', duration: 180, boxes: ['orange', 'pink', 'blue'], obstacles: 0, advance: '16 Besar' },
+            '16besar': { label: '16 Besar', duration: 180, boxes: ['orange', 'pink', 'blue', 'purple'], obstacles: 0, advance: '8 Besar' },
+            '8besar': { label: '8 Besar', duration: 120, boxes: ['orange', 'pink', 'blue', 'purple'], obstacles: 2, advance: 'Semifinal' },
+            semifinal: { label: 'Semifinal', duration: 120, boxes: ['orange', 'pink', 'blue', 'purple', 'yellow'], obstacles: 2, advance: 'Final' },
+            final: { label: 'Final', duration: 120, boxes: ['orange', 'pink', 'blue', 'purple', 'yellow'], obstacles: 3, advance: 'Juara' }
+        };
+        const raceEls = {
+            round: document.getElementById('race-round-select'),
+            timer: document.getElementById('race-timer'),
+            score: document.getElementById('race-score-value'),
+            retry: document.getElementById('race-retry-value'),
+            status: document.getElementById('race-status'),
+            checklist: document.getElementById('race-checklist'),
+            start: document.getElementById('race-start-btn'),
+            pause: document.getElementById('race-pause-btn'),
+            reset: document.getElementById('race-reset-btn'),
+            retryBtn: document.getElementById('race-retry-btn'),
+            finish: document.getElementById('race-finish-btn')
+        };
+        let raceTimer = null;
+        let raceState = makeDefaultRaceState('penyisihan');
+
+        function makeDefaultRaceState(roundKey) {
+            const round = RACE_ROUNDS[roundKey] || RACE_ROUNDS.penyisihan;
+            return {
+                round: roundKey in RACE_ROUNDS ? roundKey : 'penyisihan',
+                remaining: round.duration,
+                running: false,
+                status: 'ready',
+                retries: 0,
+                finishedAt: null,
+                placed: {}
+            };
+        }
+
+        function formatRaceTime(seconds) {
+            const s = Math.max(0, Math.floor(seconds));
+            return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        }
+
+        function getRaceRound() {
+            return RACE_ROUNDS[raceState.round] || RACE_ROUNDS.penyisihan;
+        }
+
+        function isRaceLocked() {
+            return raceState.status === 'finished' || raceState.status === 'timeout';
+        }
+
+        function raceScore() {
+            return getRaceRound().boxes.reduce((sum, key) => sum + (raceState.placed[key] ? RACE_BOXES[key].points : 0), 0);
+        }
+
+        function saveRaceState() {
+            try {
+                localStorage.setItem(RACE_STORAGE_KEY, JSON.stringify(raceState));
+            } catch (err) {
+                console.warn('Race state tidak bisa disimpan:', err);
+            }
+        }
+
+        function loadRaceState() {
+            try {
+                const raw = localStorage.getItem(RACE_STORAGE_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (!saved || !(saved.round in RACE_ROUNDS)) return;
+                const base = makeDefaultRaceState(saved.round);
+                raceState = {
+                    ...base,
+                    remaining: Number.isFinite(saved.remaining) ? Math.max(0, Math.min(saved.remaining, base.remaining)) : base.remaining,
+                    running: false,
+                    status: ['ready', 'running', 'paused', 'finished', 'timeout'].includes(saved.status) ? (saved.status === 'running' ? 'paused' : saved.status) : 'ready',
+                    retries: Number.isFinite(saved.retries) ? Math.max(0, Math.min(RACE_MAX_RETRY, saved.retries)) : 0,
+                    finishedAt: Number.isFinite(saved.finishedAt) ? saved.finishedAt : null,
+                    placed: typeof saved.placed === 'object' && saved.placed ? saved.placed : {}
+                };
+            } catch (err) {
+                console.warn('Race state tidak bisa dibaca:', err);
+            }
+        }
+
+        function applyRaceVisuals() {
+            const round = getRaceRound();
+            Object.entries(gameObjectsByColor).forEach(([colorKey, objects]) => {
+                const visible = round.boxes.includes(colorKey);
+                objects.forEach((obj) => { obj.visible = visible; });
+            });
+            obstacleObjects.forEach((obj, idx) => {
+                obj.visible = idx < round.obstacles;
+            });
+        }
+
+        function renderRaceChecklist() {
+            if (!raceEls.checklist) return;
+            const round = getRaceRound();
+            const locked = isRaceLocked();
+            raceEls.checklist.innerHTML = round.boxes.map((key) => {
+                const box = RACE_BOXES[key];
+                const checked = !!raceState.placed[key];
+                return `
+                    <label class="race-check-item" data-color="${key}" data-placed="${checked}">
+                        <input type="checkbox" data-race-box="${key}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''}>
+                        <span><i class="race-color-dot" style="background:${box.color}; color:${box.color};"></i> ${box.label}</span>
+                        <em class="race-points">${box.points} pt</em>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        function renderRaceUI() {
+            const round = getRaceRound();
+            if (raceEls.round) raceEls.round.value = raceState.round;
+            if (raceEls.timer) raceEls.timer.textContent = formatRaceTime(raceState.remaining);
+            if (raceEls.score) raceEls.score.textContent = raceScore();
+            if (raceEls.retry) raceEls.retry.textContent = `${raceState.retries} / ${RACE_MAX_RETRY}`;
+            if (raceEls.status) {
+                const statusText = {
+                    ready: 'READY',
+                    running: 'RUNNING',
+                    paused: 'PAUSED',
+                    finished: `FINISH ${raceState.finishedAt != null ? formatRaceTime(raceState.finishedAt) : ''}`,
+                    timeout: 'TIDAK FINISH'
+                };
+                raceEls.status.textContent = statusText[raceState.status] || 'READY';
+                raceEls.status.className = `race-status ${raceState.status}`;
+                raceEls.status.title = raceState.status === 'timeout'
+                    ? 'Waktu habis. PDF tidak menyebut nominal pengurangan poin, jadi web hanya memberi status.'
+                    : `${round.label}: ${round.boxes.length} box aktif, ${round.obstacles} obstacle merah.`;
+            }
+            if (raceEls.start) raceEls.start.disabled = raceState.running || isRaceLocked() || raceState.remaining <= 0;
+            if (raceEls.pause) raceEls.pause.disabled = !raceState.running;
+            if (raceEls.retryBtn) raceEls.retryBtn.disabled = raceState.retries >= RACE_MAX_RETRY || isRaceLocked();
+            if (raceEls.finish) raceEls.finish.disabled = isRaceLocked() || raceState.remaining <= 0;
+            renderRaceChecklist();
+            applyRaceVisuals();
+        }
+
+        function stopRaceTimer() {
+            if (raceTimer) clearInterval(raceTimer);
+            raceTimer = null;
+            raceState.running = false;
+        }
+
+        function tickRaceTimer() {
+            if (!raceState.running || isRaceLocked()) return;
+            raceState.remaining = Math.max(0, raceState.remaining - 1);
+            if (raceState.remaining <= 0) {
+                stopRaceTimer();
+                raceState.status = 'timeout';
+            }
+            renderRaceUI();
+            saveRaceState();
+        }
+
+        function startRaceTimer() {
+            if (isRaceLocked() || raceState.remaining <= 0) return;
+            if (raceTimer) clearInterval(raceTimer);
+            raceState.running = true;
+            raceState.status = 'running';
+            raceTimer = setInterval(tickRaceTimer, 1000);
+            renderRaceUI();
+            saveRaceState();
+        }
+
+        function pauseRaceTimer() {
+            if (!raceState.running) return;
+            stopRaceTimer();
+            raceState.status = 'paused';
+            renderRaceUI();
+            saveRaceState();
+        }
+
+        function resetRace(roundKey = raceState.round) {
+            stopRaceTimer();
+            raceState = makeDefaultRaceState(roundKey);
+            resetRobotToStart();
+            renderRaceUI();
+            saveRaceState();
+        }
+
+        function retryRace() {
+            if (raceState.retries >= RACE_MAX_RETRY || isRaceLocked()) return;
+            raceState.retries += 1;
+            resetRobotToStart();
+            renderRaceUI();
+            saveRaceState();
+        }
+
+        function finishRace() {
+            if (isRaceLocked()) return;
+            stopRaceTimer();
+            raceState.status = 'finished';
+            raceState.finishedAt = getRaceRound().duration - raceState.remaining;
+            renderRaceUI();
+            saveRaceState();
+        }
+
+        raceEls.round?.addEventListener('change', (event) => resetRace(event.target.value));
+        raceEls.start?.addEventListener('click', startRaceTimer);
+        raceEls.pause?.addEventListener('click', pauseRaceTimer);
+        raceEls.reset?.addEventListener('click', () => resetRace());
+        raceEls.retryBtn?.addEventListener('click', retryRace);
+        raceEls.finish?.addEventListener('click', finishRace);
+        raceEls.checklist?.addEventListener('change', (event) => {
+            const key = event.target?.dataset?.raceBox;
+            if (!key || isRaceLocked()) return;
+            raceState.placed[key] = !!event.target.checked;
+            renderRaceUI();
+            saveRaceState();
+        });
+        loadRaceState();
+        renderRaceUI();
 
         function setSensorDisplay(key, id, rawValue) {
             const el = document.getElementById(id); if (!el) return;
@@ -1048,6 +1497,8 @@ void loop() {
         let viewLocked = false; let robotMouseMode = false; let gyroPidEnabled = true;
 
         const gyroPid = { targetYaw: 0, kp: SIM_PID_SETTINGS.kp, ki: SIM_PID_SETTINGS.ki, kd: SIM_PID_SETTINGS.kd, integral: 0, lastError: 0, hasLastError: false, lastTime: performance.now(), output: 0 };
+        simGyroReady = true;
+        resetRobotToStart();
 
         function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
         function wrapAngle(a) { return Math.atan2(Math.sin(a), Math.cos(a)); }
@@ -1064,18 +1515,24 @@ void loop() {
         const ROBOT_GROUND = {
             halfX: 0.055,          // setengah lebar robot / jarak sample roda kanan-kiri
             halfZ: 0.055,          // setengah panjang robot / jarak sample roda depan-belakang
-            wheelClearance: 0.030, // tinggi pusat body dari permukaan lantai
+            wheelClearance: 0.024, // tinggi pusat body dari permukaan lantai
             smoothY: 0.35,
             smoothTilt: 0.22,
             maxTiltRad: 0.55,
             rayY: 1.20
         };
+        robotGroundReady = true;
+        snapRobotToGroundPose();
 
         function sampleFloorY(worldX, worldZ) {
             const rayDown = new THREE.Raycaster(
                 new THREE.Vector3(worldX, ROBOT_GROUND.rayY, worldZ),
                 new THREE.Vector3(0, -1, 0)
             );
+            if (activeTrackLayer === 'official' && officialFloorObjects.length) {
+                const officialHits = rayDown.intersectObjects(officialFloorObjects, true);
+                if (officialHits.length > 0) return officialHits[0].point.y;
+            }
             const hits = rayDown.intersectObjects(floorObjects, true);
             if (hits.length > 0) return hits[0].point.y;
             return 0;
@@ -1090,15 +1547,11 @@ void loop() {
             };
         }
 
-        function updateRobotGroundPose() {
-            // Saat ROBOT MOUSE ON, tilt/lift manual jangan ditimpa oleh terrain.
-            if (robotMouseMode) return;
-
+        function getRobotGroundTarget() {
             const yaw = robot.rotation.y;
             const hx = ROBOT_GROUND.halfX;
             const hz = ROBOT_GROUND.halfZ;
 
-            // Local -Z = FRONT robot.
             const pFL = yawLocalToWorldOffset(-hx, -hz, yaw);
             const pFR = yawLocalToWorldOffset(hx, -hz, yaw);
             const pRL = yawLocalToWorldOffset(-hx, hz, yaw);
@@ -1115,25 +1568,30 @@ void loop() {
             const rightH = (hFR + hRR) * 0.5;
             const avgH = (hFL + hFR + hRL + hRR) * 0.25;
 
-            const targetY = avgH + ROBOT_GROUND.wheelClearance;
+            return {
+                y: avgH + ROBOT_GROUND.wheelClearance,
+                pitch: clamp(Math.atan2(frontH - rearH, hz * 2), -ROBOT_GROUND.maxTiltRad, ROBOT_GROUND.maxTiltRad),
+                roll: clamp(Math.atan2(rightH - leftH, hx * 2), -ROBOT_GROUND.maxTiltRad, ROBOT_GROUND.maxTiltRad)
+            };
+        }
 
-            // rotation.x positif = hidung/front robot naik.
-            const targetPitch = clamp(
-                Math.atan2(frontH - rearH, hz * 2),
-                -ROBOT_GROUND.maxTiltRad,
-                ROBOT_GROUND.maxTiltRad
-            );
+        function snapRobotToGroundPose() {
+            if (robotMouseMode) return;
+            const target = getRobotGroundTarget();
+            robot.position.y = target.y;
+            robot.rotation.x = target.pitch;
+            robot.rotation.z = target.roll;
+        }
 
-            // rotation.z positif = sisi kanan robot naik.
-            const targetRoll = clamp(
-                Math.atan2(rightH - leftH, hx * 2),
-                -ROBOT_GROUND.maxTiltRad,
-                ROBOT_GROUND.maxTiltRad
-            );
+        function updateRobotGroundPose() {
+            // Saat ROBOT MOUSE ON, tilt/lift manual jangan ditimpa oleh terrain.
+            if (robotMouseMode) return;
 
-            robot.position.y += (targetY - robot.position.y) * ROBOT_GROUND.smoothY;
-            robot.rotation.x += (targetPitch - robot.rotation.x) * ROBOT_GROUND.smoothTilt;
-            robot.rotation.z += (targetRoll - robot.rotation.z) * ROBOT_GROUND.smoothTilt;
+            const target = getRobotGroundTarget();
+
+            robot.position.y += (target.y - robot.position.y) * ROBOT_GROUND.smoothY;
+            robot.rotation.x += (target.pitch - robot.rotation.x) * ROBOT_GROUND.smoothTilt;
+            robot.rotation.z += (target.roll - robot.rotation.z) * ROBOT_GROUND.smoothTilt;
         }
 
         function refreshControlButtons() {
@@ -1169,9 +1627,10 @@ void loop() {
         });
 
         document.getElementById('reset-robot-btn').addEventListener('click', () => {
-            robot.position.set(0, 0.03, 1.375); robot.rotation.set(0, 0, 0);
-            gyroPid.targetYaw = robot.rotation.y; gyroPid.integral = 0; gyroPid.lastError = 0; gyroPid.hasLastError = false; gyroPid.output = 0;
-            setText('val-actual', 'Gerak X:0.00 | Y:0.00 | Gyro:0deg | Lift:30mm'); updatePidMonitor();
+            resetRobotToStart();
+            const liftMm = Math.round(robot.position.y * 1000);
+            setText('val-actual', `Gerak X:0.00 | Y:0.00 | Gyro:${Math.round(radToDeg(robot.rotation.y))}deg | Lift:${liftMm}mm`);
+            updatePidMonitor();
         });
 
         (function enableRobotMouseManipulation() {
@@ -1427,7 +1886,226 @@ void loop() {
             renderer.render(scene, camera);
         }
 
+        // ========== INTERACTIVE 3D VIEW CUBE (LIKE INVENTOR) ==========
+        const viewCubeCanvas = document.getElementById('viewCubeCanvas');
+        const viewCubeCtx = viewCubeCanvas.getContext('2d');
+        
+        let viewCubeRotation = { x: 0.4, y: 0.8 };
+        let viewCubeDragging = false;
+        let viewCubeDragStart = { x: 0, y: 0 };
+        
+        const COMPASS_RADIUS = 55;
+        const INNER_RADIUS = 40;
+        const OUTER_RADIUS = 60;
+
+        function drawViewCube() {
+            const w = viewCubeCanvas.width;
+            const h = viewCubeCanvas.height;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            
+            // Background
+            viewCubeCtx.fillStyle = '#050b12';
+            viewCubeCtx.fillRect(0, 0, w, h);
+            
+            // Draw compass circle
+            viewCubeCtx.strokeStyle = 'rgba(130, 214, 255, 0.3)';
+            viewCubeCtx.lineWidth = 1.5;
+            viewCubeCtx.beginPath();
+            viewCubeCtx.arc(centerX, centerY, INNER_RADIUS, 0, Math.PI * 2);
+            viewCubeCtx.stroke();
+            
+            // Draw outer compass ring
+            viewCubeCtx.strokeStyle = 'rgba(50, 255, 177, 0.2)';
+            viewCubeCtx.lineWidth = 1;
+            viewCubeCtx.beginPath();
+            viewCubeCtx.arc(centerX, centerY, OUTER_RADIUS, 0, Math.PI * 2);
+            viewCubeCtx.stroke();
+            
+            // Draw compass directions around the cube
+            const directions = [
+                { name: 'N', angle: -Math.PI / 2, color: '#00d1ff' },
+                { name: 'E', angle: 0, color: '#00d1ff' },
+                { name: 'S', angle: Math.PI / 2, color: '#00d1ff' },
+                { name: 'W', angle: Math.PI, color: '#00d1ff' }
+            ];
+            
+            directions.forEach(dir => {
+                const x = centerX + Math.cos(dir.angle) * (OUTER_RADIUS + 15);
+                const y = centerY + Math.sin(dir.angle) * (OUTER_RADIUS + 15);
+                
+                viewCubeCtx.fillStyle = dir.color;
+                viewCubeCtx.font = 'bold 12px monospace';
+                viewCubeCtx.textAlign = 'center';
+                viewCubeCtx.textBaseline = 'middle';
+                viewCubeCtx.fillText(dir.name, x, y);
+            });
+            
+            // Draw 3D cube faces
+            const size = 20;
+            const cube = [
+                { vertices: [[0,0,0],[1,0,0],[1,1,0],[0,1,0]], face: 'front', color: '#ff6b6b', label: 'F' },
+                { vertices: [[1,0,0],[1,0,1],[1,1,1],[1,1,0]], face: 'right', color: '#4ecdc4', label: 'R' },
+                { vertices: [[1,0,1],[0,0,1],[0,1,1],[1,1,1]], face: 'back', color: '#ffe66d', label: 'B' },
+                { vertices: [[0,0,1],[0,0,0],[0,1,0],[0,1,1]], face: 'left', color: '#95e1d3', label: 'L' },
+                { vertices: [[0,1,0],[1,1,0],[1,1,1],[0,1,1]], face: 'top', color: '#a8dadc', label: 'T' },
+                { vertices: [[0,0,1],[1,0,1],[1,0,0],[0,0,0]], face: 'bottom', color: '#457b9d', label: 'Bo' }
+            ];
+            
+            const projected = cube.map(face => {
+                const pts = face.vertices.map(v => {
+                    let x = (v[0] - 0.5) * 2;
+                    let y = (v[1] - 0.5) * 2;
+                    let z = (v[2] - 0.5) * 2;
+                    
+                    // Apply view cube rotation
+                    const cx = Math.cos(viewCubeRotation.x), sx = Math.sin(viewCubeRotation.x);
+                    const cy = Math.cos(viewCubeRotation.y), sy = Math.sin(viewCubeRotation.y);
+                    
+                    let ty = y * cx - z * sx;
+                    let tz = y * sx + z * cx;
+                    let tx = x * cy + tz * sy;
+                    tz = -x * sy + tz * cy;
+                    
+                    return { 
+                        x: centerX + tx * size * 0.7, 
+                        y: centerY - ty * size * 0.7, 
+                        z: tz 
+                    };
+                });
+                const avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+                return { ...face, pts, avgZ };
+            }).sort((a, b) => a.avgZ - b.avgZ);
+            
+            projected.forEach(face => {
+                const alpha = Math.max(0.2, Math.min(0.95, (face.avgZ + 1) * 0.5));
+                viewCubeCtx.fillStyle = face.color;
+                viewCubeCtx.globalAlpha = alpha;
+                viewCubeCtx.beginPath();
+                viewCubeCtx.moveTo(face.pts[0].x, face.pts[0].y);
+                for (let i = 1; i < face.pts.length; i++) viewCubeCtx.lineTo(face.pts[i].x, face.pts[i].y);
+                viewCubeCtx.closePath();
+                viewCubeCtx.fill();
+                
+                viewCubeCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+                viewCubeCtx.lineWidth = 1;
+                viewCubeCtx.stroke();
+                
+                // Draw face label
+                const centerPt = {
+                    x: face.pts.reduce((sum, p) => sum + p.x, 0) / face.pts.length,
+                    y: face.pts.reduce((sum, p) => sum + p.y, 0) / face.pts.length
+                };
+                viewCubeCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                viewCubeCtx.font = 'bold 9px monospace';
+                viewCubeCtx.textAlign = 'center';
+                viewCubeCtx.textBaseline = 'middle';
+                viewCubeCtx.globalAlpha = 1;
+                viewCubeCtx.fillText(face.label, centerPt.x, centerPt.y);
+            });
+            
+            viewCubeCtx.globalAlpha = 1;
+        }
+
+        function syncViewCubeFromCamera() {
+            const dir = camera.position.clone().sub(controls.target);
+            if (dir.lengthSq() < 0.000001) return;
+            dir.normalize();
+            viewCubeRotation.y = Math.atan2(dir.z, dir.x);
+            viewCubeRotation.x = THREE.MathUtils.clamp(
+                Math.acos(THREE.MathUtils.clamp(dir.y, -1, 1)) - Math.PI / 2,
+                -Math.PI / 2 + 0.1,
+                Math.PI / 2 - 0.1
+            );
+        }
+
+        // Update main camera when view cube rotates
+        function syncCameraFromViewCube() {
+            // Calculate camera position based on view cube rotation
+            const distance = 3.2;
+            const theta = viewCubeRotation.y;
+            const phi = viewCubeRotation.x + Math.PI / 2;
+            
+            const camX = distance * Math.sin(phi) * Math.cos(theta);
+            const camY = distance * Math.cos(phi);
+            const camZ = distance * Math.sin(phi) * Math.sin(theta);
+            
+            camera.position.set(camX, camY, camZ);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        viewCubeCanvas.addEventListener('mousedown', (e) => {
+            viewCubeDragging = true;
+            viewCubeDragStart = { x: e.offsetX, y: e.offsetY };
+        });
+        
+        viewCubeCanvas.addEventListener('mousemove', (e) => {
+            if (viewCubeDragging) {
+                const dx = (e.offsetX - viewCubeDragStart.x) * 0.02;
+                const dy = (e.offsetY - viewCubeDragStart.y) * 0.02;
+                
+                viewCubeRotation.y += dx;
+                viewCubeRotation.x += dy;
+                viewCubeRotation.x = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, viewCubeRotation.x));
+                
+                viewCubeDragStart = { x: e.offsetX, y: e.offsetY };
+                
+                // Sync main camera with view cube rotation
+                syncCameraFromViewCube();
+                drawViewCube();
+            }
+        });
+        
+        viewCubeCanvas.addEventListener('mouseup', () => { viewCubeDragging = false; });
+        viewCubeCanvas.addEventListener('mouseleave', () => { viewCubeDragging = false; });
+        
+        viewCubeCanvas.addEventListener('click', (e) => {
+            if (viewCubeDragging) return;
+            
+            const rect = viewCubeCanvas.getBoundingClientRect();
+            const dx = e.clientX - rect.left - viewCubeCanvas.width / 2;
+            const dy = e.clientY - rect.top - viewCubeCanvas.height / 2;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            // Check if clicked on cube faces
+            if (dist < INNER_RADIUS) {
+                const angle = Math.atan2(dy, dx);
+                
+                // Top face (N)
+                if (angle > -3*Math.PI/4 && angle < -Math.PI/4) {
+                    viewCubeRotation.x = Math.PI / 2.2;
+                }
+                // Right face (E)
+                else if (angle >= -Math.PI/4 && angle < Math.PI/4) {
+                    viewCubeRotation.x = 0.3;
+                    viewCubeRotation.y = -Math.PI / 2;
+                }
+                // Bottom face (S)
+                else if (angle >= Math.PI/4 && angle < 3*Math.PI/4) {
+                    viewCubeRotation.x = -Math.PI / 2.2;
+                }
+                // Left face (W)
+                else {
+                    viewCubeRotation.x = 0.3;
+                    viewCubeRotation.y = Math.PI / 2;
+                }
+                
+                syncCameraFromViewCube();
+                drawViewCube();
+            }
+        });
+
+        let viewCubeAnimFrame = null;
+        function animateViewCube() {
+            if (!viewCubeDragging) syncViewCubeFromCamera();
+            drawViewCube();
+            viewCubeAnimFrame = requestAnimationFrame(animateViewCube);
+        }
+        animateViewCube();
+
         try { loadState(); } catch (e) { }
+        if (initialView) setCameraPreset(initialView);
         animate();
     </script>
     <script src="js/shared-nav.js"></script>
